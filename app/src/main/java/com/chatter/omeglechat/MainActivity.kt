@@ -26,15 +26,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            OmegleChatTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainApp()
-                }
-            }
+            Navigation()
+//            OmegleChatTheme {
+//                // A surface container using the 'background' color from the theme
+//                Surface(
+//                    modifier = Modifier.fillMaxSize(),
+//                    color = MaterialTheme.colorScheme.background
+//                ) {
+//                    MainApp()
+//                }
+//            }
         }
     }
 }
@@ -44,15 +45,19 @@ class MainActivity : ComponentActivity() {
 fun MainApp(
     modifier: Modifier = Modifier
 ) {
-    var shouldShowOnboarding by rememberSaveable { mutableStateOf(true) }
+//    var shouldShowOnboarding by rememberSaveable { mutableStateOf(true) }
 
-    if (shouldShowOnboarding) {
-        OnboardingScreen {
-            shouldShowOnboarding = false
-        }
-    } else {
-        ChatScreen()
-    }
+//    if (shouldShowOnboarding) {
+//        OnboardingScreen()
+//        {
+//            shouldShowOnboarding = false
+//        }
+//    } else {
+//        HomeScreen(
+//            navController = null
+//        )
+//        ChatScreen()
+//    }
 
 }
 

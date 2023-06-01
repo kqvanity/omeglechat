@@ -36,6 +36,8 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -78,7 +80,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
+
+import com.polendina.coreLib.ConnectionObserver
+import com.polendina.coreLib.NewConnection
 
 data class Message(
     val id: Int,
@@ -89,7 +95,16 @@ data class Message(
 @Preview(showBackground = true)
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
-fun ChatScreen() {
+fun PreviewChatScreen() {
+    ChatScreen(navController = null)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatScreen(
+    navController: NavController?,
+    modifier: Modifier = Modifier,
+) {
     val connectionState = remember { mutableStateOf("") }
 
     val messages = remember { mutableStateListOf<Message>() }
@@ -97,10 +112,10 @@ fun ChatScreen() {
     /*
         - The current implementation is just a placeholder before actually implementing it properly with a toggle button and whatnot
     */
-    var darkThemeState by remember { mutableStateOf(false) }
+    val darkThemeState by remember { mutableStateOf(false) }
 
     val newConnection = MainConnectionSetup(connectionState = connectionState, messages = messages)
-    newConnection.setMutualTopics(mutableListOf("talk", "gay"))
+    newConnection.setMutualTopics(UserPreferences().getMutualTopics())
     newConnection.start()
 
 //        val list = (0..50).map { it.toString() }
@@ -118,23 +133,27 @@ fun ChatScreen() {
                     scrollBehavior = scrollBehavior,
                     newConnection = newConnection,
                     messages = messages,
-                    connectionState = connectionState
+                    connectionState = connectionState,
+                    navController = navController
                 )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        darkThemeState = !darkThemeState
-                    }
-                ) {
-                    Icon(imageVector = Icons.Outlined.Info, contentDescription = null)
-                }
             },
             content = { paddingValue ->
                 MainContent(
                     paddingValue = paddingValue,
                     messages = messages
                 )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+//                        darkThemeState = !darkThemeState
+                        newConnection.disconnect()
+                        newConnection.start()
+                        messages.clear()
+                    }
+                ) {
+                    Icon(imageVector = Icons.Outlined.Info, contentDescription = null)
+                }
             },
 //        floatingActionButtonPosition = FabPosition.End,
 //        floatingActionButton = {
@@ -157,10 +176,11 @@ private fun TopBar(
     newConnection: NewConnection,
     messages: SnapshotStateList<Message>,
     connectionState: MutableState<String>,
+    navController: NavController?,
     modifier: Modifier = Modifier
 ) {
     val showHomeScreen = remember { mutableStateOf(false) }
-    if (showHomeScreen.value) HomeScreen()
+    if (showHomeScreen.value) HomeScreen(null)
 
     TopAppBar(
         title = {
@@ -173,10 +193,14 @@ private fun TopBar(
         navigationIcon = {
             IconButton(
                 onClick = {
-                    showHomeScreen.value = true
+//                    showHomeScreen.value = true
+                    navController?.navigate(Screen.HomeScreen.route)
                 }
             ) {
-                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = null
+                )
             }
         },
         actions = {
@@ -185,9 +209,6 @@ private fun TopBar(
 //                    if (buttonIconState == Icons.Default.Send) {
 //                    } else if (buttonIconState == Icons.Default.Close) {
 //                    }
-                    newConnection.disconnect()
-                    newConnection.start()
-                    messages.clear()
                 }
             ) {
                 /*
@@ -196,7 +217,7 @@ private fun TopBar(
                             - It'd only if he's using the same app.
                  */
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = Icons.Default.Search,
                     contentDescription = null
                 )
             }
@@ -222,32 +243,6 @@ private fun MainContent(
             .background(MaterialTheme.colorScheme.onPrimary)
             .fillMaxWidth()
     ) {
-        /*
-            - DEBUGGING
-                - This messages variable is for debugging purposes only
-         */
-        val messagess = listOf(
-            Message(0, "Hi"),
-            Message(1, "Hello"),
-            Message(0, "How Area"),
-            Message(1, "Doing fine"),
-            Message(0, "Nice to meet  you"),
-            Message(0, "I really like you"),
-            Message(1, "How Area"),
-            Message(
-                0,
-                "Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly"
-            ),
-            Message(1, "Nice to meet  you"),
-            Message(0, "How Area"),
-            Message(1, "Doing fine"),
-            Message(0, "Nice to meet  you"),
-            Message(0, "I really like you"),
-            Message(
-                0,
-                "Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly"
-            )
-        )
         items(
             messages
         ) { message ->
@@ -263,9 +258,9 @@ private fun MainContent(
                     )
                     .fillMaxWidth()
             ) {
-                Surface(
-                    onClick = { /*TODO*/ },
-                    color = if (message.id == 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
+                Card(
+//                    onClick = { /*TODO*/ },
+                    colors = CardDefaults.cardColors(containerColor = if (message.id == 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer) ,
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
                 ) {
@@ -286,20 +281,44 @@ private fun MainContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BottomBar(newConnection: NewConnection, messages: SnapshotStateList<Message>) {
+private fun BottomBar(
+    newConnection: NewConnection,
+    messages: SnapshotStateList<Message>,
+    modifier: Modifier = Modifier
+) {
     Row(
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.onPrimary)
+            .padding(
+                horizontal = 5.dp
+            )
     ) {
 //        val textState by remember { mutableStateOf(TextFieldValue()) }
         var textState by remember { mutableStateOf("") }
         val buttonIconState by remember { mutableStateOf(Icons.Default.Send) }
-        TextField(
+        OutlinedTextField(
             value = textState,
 //            colors = TextFieldColors(),
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        /*
+                            - I guess this button should have some other implementation for the onClick callback
+                                - for example if the TextField content is empty, there the Send button is deactivated in some way
+                         */
+//                        Toast.makeText("Hello", textState.value.text, Toast.LENGTH_LONG).show()
+                        newConnection.sendText(textState)
+                        Log.i("Message", textState) // Debug
+                        messages.add(Message(0, textState))
+                        textState = ""
+                    }
+                ) {
+                   Icon(imageVector = Icons.Filled.Send, contentDescription = null)
+                }
+            },
             onValueChange = {
                 textState = it
 //                if (textState.isEmpty()) {
@@ -307,28 +326,20 @@ private fun BottomBar(newConnection: NewConnection, messages: SnapshotStateList<
             },
             modifier = Modifier
                 .padding(vertical = 10.dp)
-//                .weight(6f)
+                .fillMaxWidth()
         )
-        Button(
-            onClick = {
-                /*
-                    - I guess this button should have some other implementation for the onClick callback
-                        - for example if the TextField content is empty, there the Send button is deactivated in some way
-                 */
-//                        Toast.makeText("Hello", textState.value.text, Toast.LENGTH_LONG).show()
-                newConnection.sendText(textState)
-                messages.add(Message(0, textState))
-                textState = ""
-            },
-            modifier = Modifier
+//        Button(
+//            onClick = {
+//            },
+//            modifier = Modifier
 //                .weight(2f)
-                .clip(CircleShape)
-        ) {
-            Icon(
-                imageVector = buttonIconState,
-                contentDescription = null
-            )
-        }
+//                .clip(CircleShape)
+//        ) {
+//            Icon(
+//                imageVector = buttonIconState,
+//                contentDescription = null
+//            )
+//        }
     }
 //            BottomAppBar(
 //                modifier = Modifier
@@ -360,6 +371,10 @@ fun MainConnectionSetup(
             connectionState.value = "User Typing"
         }
 
+        override fun onStoppedTyping() {
+            connectionState.value = ""
+        }
+
         override fun onUserDisconnected() {
             connectionState.value = "User disconnected"
             messages.clear()
@@ -377,6 +392,7 @@ fun MainConnectionSetup(
         override fun onSomethingElse() {
             println("Something else!")
         }
+
     })
     return (newConnection)
 }

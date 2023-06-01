@@ -18,13 +18,18 @@ import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavController
 
 @Composable
 fun OnboardingScreen(
-    modifier: Modifier = Modifier,
-    onContinueClicked: () -> Unit
+    onContinueClicked: () -> Unit,
+    navController: NavController?,
+    modifier: Modifier = Modifier
 ) {
-    Surface() {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -34,7 +39,10 @@ fun OnboardingScreen(
             Text(text = "Welcome to the Omegle app!")
             Button(
                 modifier = Modifier.padding(vertical = 24.dp),
-                onClick = onContinueClicked
+//                onClick = onContinueClicked
+                onClick = {
+                    navController?.navigate(Screen.HomeScreen.route)
+                }
             ) {
                 Text(text = "Continue")
             }
@@ -42,12 +50,13 @@ fun OnboardingScreen(
     }
 }
 
-@Preview(showBackground = true, widthDp = 400, heightDp = 400)
+//@Preview(showBackground = true, widthDp = 400, heightDp = 400)
+@Preview(showBackground = true)
 @Composable
 fun OnboardingPreview() {
     OmegleChatTheme() {
         // I'm passing an empty callback here, because the preview is for demonstrational purposes
-        OnboardingScreen(onContinueClicked = {});
+        OnboardingScreen(onContinueClicked = {}, navController = null);
     }
 }
 
