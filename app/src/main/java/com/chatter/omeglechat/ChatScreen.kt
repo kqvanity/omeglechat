@@ -2,81 +2,49 @@ package com.chatter.omeglechat
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
-import android.widget.Toast
-import android.widget.ToggleButton
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.snapshots.SnapshotStateMap
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.modifier.modifierLocalConsumer
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -85,6 +53,8 @@ import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 
 import com.polendina.coreLib.ConnectionObserver
 import com.polendina.coreLib.NewConnection
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 data class Message(
     val id: Int,
@@ -108,13 +78,18 @@ fun ChatScreen(
     val connectionState = remember { mutableStateOf("") }
 
     val messages = remember { mutableStateListOf<Message>() }
+//    val messages = remember { mutableStateListOf<Message>(*messagess.toTypedArray()) }  // Converting a list to a vararg argument. nap
 
     /*
         - The current implementation is just a placeholder before actually implementing it properly with a toggle button and whatnot
     */
     val darkThemeState by remember { mutableStateOf(false) }
 
-    val newConnection = MainConnectionSetup(connectionState = connectionState, messages = messages)
+    val coroutineScope = rememberCoroutineScope()       // nap
+
+    val scrollState = rememberLazyListState()
+
+    val newConnection = MainConnectionSetup(connectionState = connectionState, coroutineScope = coroutineScope, scrollState = scrollState, messages = messages)
     newConnection.setMutualTopics(UserPreferences().getMutualTopics())
     newConnection.start()
 
@@ -123,6 +98,7 @@ fun ChatScreen(
     OmegleChatTheme(
         darkTheme = darkThemeState
     ) {
+
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
         Scaffold(
             modifier = Modifier
@@ -140,7 +116,8 @@ fun ChatScreen(
             content = { paddingValue ->
                 MainContent(
                     paddingValue = paddingValue,
-                    messages = messages
+                    messages = messages,
+                    scrollState = scrollState
                 )
             },
             floatingActionButton = {
@@ -163,7 +140,12 @@ fun ChatScreen(
 //            }
 //        },
             bottomBar = {
-                BottomBar(newConnection = newConnection, messages = messages)
+                BottomBar(
+                    newConnection = newConnection,
+                    messages = messages,
+                    coroutineScope = coroutineScope,
+                    scrollState = scrollState
+                )
             }
         )
     }
@@ -233,12 +215,14 @@ private fun TopBar(
 private fun MainContent(
     paddingValue: PaddingValues,
     messages: SnapshotStateList<Message>,
+    scrollState: LazyListState,         // nap
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
 //        contentPadding = PaddingValues(20.dp),
         contentPadding = paddingValue,
         verticalArrangement = Arrangement.spacedBy(10.dp),
+        state = scrollState,    // nap
         modifier = Modifier
             .background(MaterialTheme.colorScheme.onPrimary)
             .fillMaxWidth()
@@ -284,6 +268,8 @@ private fun MainContent(
 private fun BottomBar(
     newConnection: NewConnection,
     messages: SnapshotStateList<Message>,
+    scrollState: LazyListState,
+    coroutineScope: CoroutineScope,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -314,6 +300,7 @@ private fun BottomBar(
                         Log.i("Message", textState) // Debug
                         messages.add(Message(0, textState))
                         textState = ""
+                        scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
                     }
                 ) {
                    Icon(imageVector = Icons.Filled.Send, contentDescription = null)
@@ -352,6 +339,8 @@ private fun BottomBar(
 @Composable
 fun MainConnectionSetup(
     connectionState: MutableState<String>,
+    scrollState: LazyListState,
+    coroutineScope: CoroutineScope,
     messages: SnapshotStateList<Message>
 ): NewConnection {
     val newConnection = NewConnection(object : ConnectionObserver {
@@ -377,6 +366,7 @@ fun MainConnectionSetup(
 
         override fun onUserDisconnected() {
             connectionState.value = "User disconnected"
+            scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
             messages.clear()
         }
 
@@ -387,6 +377,7 @@ fun MainConnectionSetup(
         override fun onGotMessage(message: String) {
             connectionState.value = ""
             messages.add(Message(1, message))
+            scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
         }
 
         override fun onSomethingElse() {
@@ -397,3 +388,22 @@ fun MainConnectionSetup(
     return (newConnection)
 }
 
+/**
+ * Scroll to the bottom of a lazy list. It can be conveniently used when in conversation with each new message in the current user view.
+ *
+ * @param scrollState The state of the lazy list, upon which this method will work on.
+ * @param coroutineScope the coroutine scope that's used to run the animateScrollToItem method.
+ */
+private fun scrollToBottom(scrollState: LazyListState, coroutineScope: CoroutineScope) { // nap
+    /*
+        - I guess it needs a bit of refinement.
+            - Like what if the user explicitly scrolled up.
+            - Should i force him down with each new message, or maybe i should notify him of a new incoming message like whatsapp does?
+     */
+    coroutineScope.launch {     // nap
+        val lazyColumnItemsCount = scrollState.layoutInfo.totalItemsCount   // nap
+        if (lazyColumnItemsCount > 0) {
+            scrollState.animateScrollToItem( lazyColumnItemsCount - 1 )     // Scroll to the last item. Still not working fully
+        }
+    }
+}
