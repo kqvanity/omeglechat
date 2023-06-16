@@ -41,10 +41,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -107,9 +109,9 @@ fun Greeting(
     word: String,
     modifier: Modifier = Modifier
 ) {
-    val expandedState = remember { mutableStateOf(false) }
-    val extraPadding = animateDpAsState(
-        targetValue = if (expandedState.value) 40.dp else 0.dp,
+    var expandedState by remember { mutableStateOf(false) }
+    val extraPadding by animateDpAsState(
+        targetValue = if (expandedState) 40.dp else 0.dp,
 //        animationSpec = tween(durationMillis = 200)
         animationSpec = spring(
             Spring.DampingRatioMediumBouncy,
@@ -135,7 +137,7 @@ fun Greeting(
                     .weight(1f)
                     .padding(
                         // Mitigates bugs related to the padding becoming negative, thus crashing the app
-                        bottom = extraPadding.value.coerceAtLeast(0.dp)
+                        bottom = extraPadding.coerceAtLeast(0.dp)
                     )
             ) {
                 Text(
@@ -146,22 +148,20 @@ fun Greeting(
                     text = "${word}!",
                     style = MaterialTheme.typography.bodyLarge
                 )
-                if (expandedState.value) {
+                if (expandedState) {
                     Text(
-                        text = ("Composem ipsum color sit lazy, " + "padding theme elit. sed do bouncy. ").repeat(
-                            2
-                        )
+                        text = ("Composem ipsum color sit lazy, " + "padding theme elit. sed do bouncy. ").repeat(2)
                     )
                 }
             }
             OutlinedButton(
                 onClick = {
-                    expandedState.value = !expandedState.value
+                    expandedState = !expandedState
                 },
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface),
             ) {
                 Text(
-                    text = if (!expandedState.value) stringResource(id = R.string.show_more) else stringResource(
+                    text = if (!expandedState) stringResource(id = R.string.show_more) else stringResource(
                         id = R.string.show_less
                     ),
                 )
@@ -170,16 +170,6 @@ fun Greeting(
     }
 }
 
-
-@Preview(
-    showBackground = true,
-    widthDp = 320
-)
-//@Preview( showBackground = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode", )
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen(navController = null)
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -221,5 +211,15 @@ fun HomeScreen(
             }
         )
 //    }
+}
+
+@Preview(
+    showBackground = true,
+    widthDp = 320
+)
+//@Preview( showBackground = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode", )
+@Composable
+fun HomeScreenPreview() {
+    HomeScreen(navController = null)
 }
 

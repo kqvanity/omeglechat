@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
@@ -43,7 +44,7 @@ fun DrawerHeader(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 60.dp)
+            .padding(vertical = 40.dp)
     ) {
         Text(
             text = "Header",
@@ -109,7 +110,7 @@ fun WholeDrawer(
                 MenuItem(
                     id = "Chat",
                     title = "Chat",
-                    icon = Icons.Default.Call
+                    icon = Icons.Default.Chat
                 ),
                 MenuItem(
                     id = "Settings",
@@ -123,10 +124,14 @@ fun WholeDrawer(
                 )
             ),
             onitemCallback = {
-                currentScreenId.value = it.id
-                when(currentScreenId.value) {
-                    "Home" -> navController?.navigate(Screen.HomeScreen.route)
-                    "Chat" -> navController?.navigate(Screen.chatScreen.route)
+                navController.run {
+                    navController!!
+                    currentScreenId.value = it.id
+                    when(currentScreenId.value) {
+                        "Home" -> navController.navigate(Screen.HomeScreen.route)
+                        "Chat" -> navController.navigate(Screen.chatScreen.route)
+                        "Settings" -> navController.navigate(Screen.settingsScreen.route)
+                    }
                 }
             }
         )

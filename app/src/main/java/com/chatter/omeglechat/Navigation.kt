@@ -1,5 +1,6 @@
 package com.chatter.omeglechat
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,6 +28,9 @@ fun Navigation() {
         composable(route = Screen.drawerScreen.route) {
             WholeDrawer(navController = navController)
         }
+        composable(route = Screen.settingsScreen.route) {
+            SettingsScreen(navController = navController)
+        }
     }
 }
 
@@ -35,4 +39,5 @@ sealed class Screen(val route: String) {
     object HomeScreen : Screen("home_screen")
     object chatScreen : Screen("chat_screen")
     object drawerScreen : Screen("drawer_screen")
+    object settingsScreen : Screen("settings_screen")
 }

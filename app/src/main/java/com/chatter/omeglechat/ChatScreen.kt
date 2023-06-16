@@ -1,8 +1,11 @@
 package com.chatter.omeglechat
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.graphics.Color
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,6 +17,9 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -29,11 +35,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,20 +54,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.navigation.NavController
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
+import com.chatter.omeglechat.ui.theme.Typography
 
 import com.polendina.coreLib.ConnectionObserver
 import com.polendina.coreLib.NewConnection
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import okhttp3.internal.checkDuration
 
 data class Message(
     val id: Int,
-    val message: String
+    val text: String
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +86,9 @@ data class Message(
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
 fun PreviewChatScreen() {
-    ChatScreen(navController = null)
+    OmegleChatTheme {
+        ChatScreen(navController = null)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,8 +99,8 @@ fun ChatScreen(
 ) {
     val connectionState = remember { mutableStateOf("") }
 
-    val messages = remember { mutableStateListOf<Message>() }
 //    val messages = remember { mutableStateListOf<Message>(*messagess.toTypedArray()) }  // Converting a list to a vararg argument. nap
+    val messages = remember { mutableStateListOf<Message>() }
 
     /*
         - The current implementation is just a placeholder before actually implementing it properly with a toggle button and whatnot
@@ -89,9 +111,21 @@ fun ChatScreen(
 
     val scrollState = rememberLazyListState()
 
-    val newConnection = MainConnectionSetup(connectionState = connectionState, coroutineScope = coroutineScope, scrollState = scrollState, messages = messages)
-    newConnection.setMutualTopics(UserPreferences().getMutualTopics())
-    newConnection.start()
+    val currentLocalContext = LocalContext.current
+
+    /*
+        todo
+            - This portion is contained within a composable function, that gets called arbitrarily.
+                - Mind the fact that I guess some conversation I had were halted, because of this problem
+     */
+    val newConnection = MainConnectionSetup(
+        connectionState = connectionState,
+        coroutineScope = coroutineScope,
+        scrollState = scrollState,
+        messages = messages
+    )
+
+    val interests = PrefDataKeyValueStore(context = currentLocalContext).watchFlag().collectAsState( initial = "" )
 
 //        val list = (0..50).map { it.toString() }
 
@@ -124,8 +158,11 @@ fun ChatScreen(
                 FloatingActionButton(
                     onClick = {
 //                        darkThemeState = !darkThemeState
-                        newConnection.disconnect()
-                        newConnection.start()
+                        coroutineScope.launch {
+                            newConnection.setMutualTopics(interests.value.split(",").map { it.trim() }.toMutableList())
+                            newConnection.start()
+                            Toast.makeText(currentLocalContext, interests.value, Toast.LENGTH_SHORT).show()
+                        }
                         messages.clear()
                     }
                 ) {
@@ -223,6 +260,7 @@ private fun MainContent(
         contentPadding = paddingValue,
         verticalArrangement = Arrangement.spacedBy(10.dp),
         state = scrollState,    // nap
+//        reverseLayout = true,           // nap
         modifier = Modifier
             .background(MaterialTheme.colorScheme.onPrimary)
             .fillMaxWidth()
@@ -243,20 +281,98 @@ private fun MainContent(
                     .fillMaxWidth()
             ) {
                 Card(
-//                    onClick = { /*TODO*/ },
-                    colors = CardDefaults.cardColors(containerColor = if (message.id == 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer) ,
+                    onClick = { /*TODO*/ },
+                    colors = CardDefaults.cardColors(containerColor = if (message.id == 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer),
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
                 ) {
-                    Text(
+                    val localCurrentContext = LocalContext.current
+                    var showMore by remember { mutableStateOf(false) }
+                    var maxLines by remember { mutableStateOf(10) }
+                    var moreLessButton by remember { mutableStateOf("more") }
+                    val annotatedString = buildAnnotatedString {
+                        val handleStyle = SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        )
+                        val handlePattern = "@(\\w+)".toRegex()
+                        message.text.split(regex = "\\s+".toRegex()).forEach {
+                            if (it.matches(handlePattern)) {
+                                pushStringAnnotation( tag = "handle", annotation = it )
+                                withStyle(style = handleStyle) {
+                                    append(text = it)
+                                }
+                                pop()       // Don't forget to end 'pushStringAnnotation' with 'pop()'
+
+//                                    appendInlineContent(
+//                                        id = "handle",
+//                                    )
+                            } else {
+                                append(it)
+                            }
+                            append(" ")
+                        }
+                    }
+                    ClickableText(
+                        /*
+                            - nap
+                                - Annotated string
+                                    - It allows to style parts of our text or paragraph.
+                                    - the withStyle method to apply the style to the portion of the text we need to style.
+                         */
                         // text = "Message ${messages.value[it]}",
-                        text = message.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onError,
+                        text = annotatedString,
+//                        inlineContent = {
+//                            "hello" to InlineTextContent(
+//                                placeholder = Placeholder(
+//                                    width
+//                                )
+//                            ) {
+//                                TextButton(onClick = { /*TODO*/ }) {
+//
+//                                }
+//                            }
+//                        },
+                        style = Typography.bodyMedium,
+                        /*
+                            - nap
+                                - If text doesn't fix in the available space, we show an ellipsis and a button to view the entire text.
+                                - onTextLayout
+                                    - It returns text layer results with measurement information captured after the layout phase.
+                                    - You don't emit UI inside onTextLayout lambda, because this call is not part of the composition.
+                                        - Instead, you can change a state variable triggering a recomposition, and then decide to show a button or not based on the value of the state variable.
+                         */
+                        // Mitigate spammy messages
+                        maxLines = maxLines,
+                        overflow = TextOverflow.Ellipsis,
+                        onTextLayout = {
+                            if (it.hasVisualOverflow) {
+                                showMore = true
+                            }
+                        },
+                        onClick = { offset ->
+                            // The sole reason I'm having annotatedString as a separate variable, is because of its usage here (there's a better compact approach? whoknows!)
+                            annotatedString.getStringAnnotations(tag = "handle", start = offset, end = offset).firstOrNull()?.let {
+                                Toast.makeText(localCurrentContext, "${it.item} copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier
                             .padding(10.dp)
                             .wrapContentWidth()
-                    )
+                        )
+                    if (showMore) {
+                        TextButton(
+                            onClick = {
+                                maxLines = if (maxLines == 10) Int.MAX_VALUE else 10    // Not sure if this is the optimal way to go about it.
+                                moreLessButton = if (moreLessButton == "more") "less" else "more"
+                            },
+                            content = {
+                                Text(text = moreLessButton)
+                            },
+                            modifier = Modifier
+                                .align(Alignment.End)
+                        )
+                    }
                 }
             }
         }
@@ -303,7 +419,7 @@ private fun BottomBar(
                         scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
                     }
                 ) {
-                   Icon(imageVector = Icons.Filled.Send, contentDescription = null)
+                    Icon(imageVector = Icons.Filled.Send, contentDescription = null)
                 }
             },
             onValueChange = {
@@ -403,7 +519,8 @@ private fun scrollToBottom(scrollState: LazyListState, coroutineScope: Coroutine
     coroutineScope.launch {     // nap
         val lazyColumnItemsCount = scrollState.layoutInfo.totalItemsCount   // nap
         if (lazyColumnItemsCount > 0) {
-            scrollState.animateScrollToItem( lazyColumnItemsCount - 1 )     // Scroll to the last item. Still not working fully
+            scrollState.animateScrollToItem(lazyColumnItemsCount - 1)     // Scroll to the last item. Still not working fully
         }
     }
 }
+
