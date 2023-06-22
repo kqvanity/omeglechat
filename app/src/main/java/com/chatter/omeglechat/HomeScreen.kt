@@ -141,7 +141,7 @@ fun Greeting(
                     )
             ) {
                 Text(
-                    text = "Hello",
+                    text = "Sep,21",
                     style = MaterialTheme.typography.headlineMedium
                 )
                 Text(

@@ -1,7 +1,12 @@
 package com.chatter.omeglechat
 
+import android.widget.Toast
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,8 +20,9 @@ fun Navigation() {
     ) {
         composable(route = Screen.onBoardingScreen.route) {
             OnboardingScreen(
-                onContinueClicked = { /*TODO*/ },
-                navController = navController
+                onContinueClicked = {
+                    navController.navigate(Screen.HomeScreen.route)
+                }
             )
         }
         composable(route = Screen.HomeScreen.route) {

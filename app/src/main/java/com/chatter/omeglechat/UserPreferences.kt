@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Interests
 import androidx.compose.material.icons.filled.Language
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Quickreply
 import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material.icons.filled.Timelapse
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +35,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,6 +50,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
@@ -173,6 +178,7 @@ fun SettingsScreen(
                     }
                 ) {
                     SettingsCheckbox(
+                        enabled = false,
                         title = {
                             Text(
                                 text = "Notifications"
@@ -192,6 +198,7 @@ fun SettingsScreen(
                         }
                     )
                     SettingsSwitch(
+                        enabled = false,
                         title = {
                             Text(
                                 text = "Dark Mode",
@@ -219,7 +226,7 @@ fun SettingsScreen(
                     }
                 ) {
                     SettingsCheckbox(
-                        enabled = true,
+                        enabled = false,
                         icon = {
                             /*
                                 - nap
@@ -248,6 +255,7 @@ fun SettingsScreen(
                     )
                     // nap
                     SettingsList(
+                        enabled = false,
                         title = {
                             Text(
                                 text = "Language",
@@ -295,6 +303,21 @@ fun SettingsScreen(
     //                            "six"
     //                        ),
     //                    )
+                    SettingsSlider(
+                        enabled = false,
+                        title = {
+                            Text(
+                                text = "Age"
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Timelapse,
+                                contentDescription = null
+                            )
+                        },
+                        valueRange = 0f..100f
+                    )
                     // nap
 //                    ListItem(headlineText = {
 //                        Text(
@@ -321,23 +344,24 @@ fun SettingsScreen(
                         // nap
 //                        Spacer(modifier = Modifier.width(2.dp))
                         // nap
-                        val interestsInitial = "Youtube, Omegle\n\t\t"    // Having a long trailing whitespace to mitigate for
-                        val interests = PrefDataKeyValueStore(context = currentLocalContext).watchFlag().collectAsState( initial = "" ).value
-//                        var interests by remember { mutableStateOf(interestsInitial) }
+                        val interestsDataStore = PrefDataKeyValueStore(context = currentLocalContext).watchFlag().collectAsState( initial = "")
+                        var interests by rememberSaveable { mutableStateOf(interestsDataStore.value) }
                         OutlinedTextField(
                             value = interests,
-                            label = {
+                            placeholder = {
                                 Text(
-                                    text = "Interests",
+                                    text = "Youtube, Talk",
+                                    style = Typography.bodyLarge,
+                                    color = Color.LightGray
                                 )
                             },
-                            onValueChange = { value ->
+                            singleLine = true,
+                            onValueChange = {
+                                interests = it
                                 coroutineScope.launch {
-                                    prefDAtaKeyValueStore.updateFlag(value)         // I guess this should be place elsewhere e.g., when the outlined text field loses focus
-                                    Log.i("Setting", value)
+                                    prefDAtaKeyValueStore.updateFlag(it)         // I guess this should be place elsewhere e.g., when the outlined text field loses focus
                                 }
                             },
-                            maxLines = 1,
                             trailingIcon = {
                                 // nap
                                 IconButton(
@@ -356,29 +380,13 @@ fun SettingsScreen(
                             },
                             modifier = Modifier
                                 .onFocusChanged {
-                                    if (it.isFocused && interests == interestsInitial) {
-//                                        interests = ""
-                                    } else if (!it.isFocused && (interests == interestsInitial || interests.isEmpty())){
-//                                        interests = interestsInitial
-                                        SolidColor(Color.Transparent)
+                                    if (it.isFocused) {
+                                    } else {
+//                                        SolidColor(Color.Transparent)
                                     }
                                 }
                         )
                     }
-                    SettingsSlider(
-                        title = {
-                            Text(
-                                text = "Age"
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Timelapse,
-                                contentDescription = null
-                            )
-                        },
-                        valueRange = 0f..100f
-                    )
                 }
                 // nap
                 Divider()
@@ -390,6 +398,7 @@ fun SettingsScreen(
                     }
                 ) {
                     SettingsSwitch(
+                        enabled = false,
                         title = {
                             Text(
                                 text = "Auto reply",
@@ -410,10 +419,65 @@ fun SettingsScreen(
                         }
                     )
                     /*
-                        - I'm thinking of appending another item for blocked people
+                        - Blocking
                             - The blockage will based off the random ID generated by the other person.
                             - It should be reference by a timestamp rather than a random string.
                      */
+                    Row (
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 5.dp)
+                            .defaultMinSize(minHeight = 72.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Block,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(start = 16.dp, end = 16.dp)
+                        )
+                        var blockedWords by remember { mutableStateOf("") }
+                        OutlinedTextField(
+                            enabled = false,
+                            value = blockedWords,
+                            onValueChange = {
+                                blockedWords = it
+                            },
+                            placeholder = {
+                                Text(
+                                    text = "M, Sex",
+                                    color = Color.LightGray
+                                )
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.RemoveCircleOutline,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
+                    SettingsSwitch(
+                        enabled = false,
+                        title = {
+                            Text(
+                                text = "Auto translate",
+                                style = Typography.bodyLarge
+                            )
+                        },
+                        subtitle = {
+                            Text(
+                                text = "Auto translate incoming and outgoing words and phrases!",
+                                style = Typography.bodySmall
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Translate,
+                                contentDescription = null
+                            )
+                        }
+                    )
                 }
             }
         }

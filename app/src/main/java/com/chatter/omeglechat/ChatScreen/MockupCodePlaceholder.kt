@@ -1,10 +1,12 @@
-package com.chatter.omeglechat
+package com.chatter.omeglechat.ChatScreen
+
+import com.chatter.omeglechat.Message
 
 /*
     - DEBUGGING
         - This messages variable is for debugging purposes only
  */
-val messagess = listOf(
+internal val chatMessages = mutableListOf<Message>(
     Message(0, "Just as you would say that lorem for @naughtycat saying and other things that makes it absolutely ridiculsoyly Just as you @maria say that lorem for additional @Romio and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyl Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly" ),
     Message(0, "Hi"),
     Message(1, "Hello"),
@@ -24,3 +26,5 @@ val messagess = listOf(
         "Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculsoyly"
     )
 )
+
+private val commonInterests = listOf("youtube", "politics", "gayming'", "Collaboration", "World of warcraft", "CSGOG", "toilet", "others")
