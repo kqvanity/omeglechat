@@ -1,19 +1,15 @@
 package com.chatter.omeglechat
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
@@ -26,131 +22,55 @@ import androidx.compose.material.icons.filled.Quickreply
 import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.datastore.core.DataStore
-import androidx.datastore.migrations.SharedPreferencesMigration
-import androidx.datastore.preferences.SharedPreferencesMigration
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.alorma.compose.settings.ui.SettingsCheckbox
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
-import com.alorma.compose.settings.ui.SettingsListDropdown
-import com.alorma.compose.settings.ui.SettingsListMultiSelect
-import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
+import com.chatter.omeglechat.ChatScreen.ChatViewModel
+import com.chatter.omeglechat.preferences.PreferencesDataStore
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
-// nap
-private const val USER_PREFERENCES_NAME = "user_preferences"
-private val Context.dataStore by preferencesDataStore(
-    name = USER_PREFERENCES_NAME,
-    produceMigrations = { context ->
-        // Adding a migration based on the SharedPreferences name, since we're migrating from SharedPreferences.
-        listOf(SharedPreferencesMigration(context, USER_PREFERENCES_NAME))
-    }
-)
-
-//private val Context.dataStore: DataStore<Preferences> by preferencesDataStore( USER_PREFERENCES_NAME )
-class PrefDataKeyValueStore(val context: Context) {
-
-    private object PreferenceKeys {
-        val interests: Preferences.Key<String> = stringPreferencesKey("interests")
-    }
-
-    suspend fun updateFlag(interests: String) = context.dataStore.edit { mutablePreferences ->
-        mutablePreferences[PreferenceKeys.interests] = interests
-    }
-
-    fun watchFlag(): Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[PreferenceKeys.interests] ?: ""
-    }
-
-}
-
-data class UserPreferences(
-    val notifications: Boolean,
-    val darkMode: Boolean,
-    val languageMatch: Boolean,
-    val language: String,
-    val interests: String,
-    val autoReply: Boolean
-)
-
-//class UserPreferences {
-//    private var bannedWords: MutableList<String> = mutableListOf(
-//        "M"
-//    )
-//    private var mutualTopics: MutableList<String> = mutableListOf(
-//        "gay"
-//    )
-//
-//    fun getBannedWords(): MutableList<String> {
-//        return (this.bannedWords)
-//    }
-//
-//    fun getMutualTopics(): MutableList<String> {
-//        return (this.mutualTopics)
-//    }
-//
-//}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController?,
+    chatViewModel: ChatViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
     val currentLocalContext = LocalContext.current
-    val prefDAtaKeyValueStore: PrefDataKeyValueStore = PrefDataKeyValueStore(context = currentLocalContext)
-    val coroutineScope = rememberCoroutineScope()
     OmegleChatTheme () {
         LazyColumn(
             modifier = Modifier
-                .fillMaxHeight()
-                .padding(20.dp)
+                .fillMaxSize()
+//                .padding(20.dp)
         ) {
 //            coroutineScope.launch {
 //                val interests =
@@ -339,15 +259,14 @@ fun SettingsScreen(
                             imageVector = Icons.Default.Interests,
                             contentDescription = null,
                             modifier = Modifier
-                                .padding(start = 16.dp, end = 16.dp)
+                                .padding(
+                                    start = dimensionResource(id = R.dimen.padding_preferences_top),
+                                    end = dimensionResource(id = R.dimen.padding_preferences_end)
+                                )
                         )
-                        // nap
-//                        Spacer(modifier = Modifier.width(2.dp))
-                        // nap
-                        val interestsDataStore = PrefDataKeyValueStore(context = currentLocalContext).watchFlag().collectAsState( initial = "")
-                        var interests by rememberSaveable { mutableStateOf(interestsDataStore.value) }
+//                        val userInterests = prefDataKeyValueStore.getUserInterests().collectAsState(initial = emptyList())
                         OutlinedTextField(
-                            value = interests,
+                            value = chatViewModel.getCommonInterests().joinToString(", "),
                             placeholder = {
                                 Text(
                                     text = "Youtube, Talk",
@@ -356,20 +275,13 @@ fun SettingsScreen(
                                 )
                             },
                             singleLine = true,
-                            onValueChange = {
-                                interests = it
-                                coroutineScope.launch {
-                                    prefDAtaKeyValueStore.updateFlag(it)         // I guess this should be place elsewhere e.g., when the outlined text field loses focus
-                                }
+                            onValueChange = { newValue ->
+                                chatViewModel.updateCommonInterests(commonInterests = newValue.split(", "))
                             },
                             trailingIcon = {
-                                // nap
                                 IconButton(
                                     onClick = {
-                                        coroutineScope.launch {
-                                            prefDAtaKeyValueStore.updateFlag("")         // I guess this should be place elsewhere e.g., when the outlined text field loses focus
-                                            Log.i("Setting", "Empty......")
-                                        }
+                                        chatViewModel.updateCommonInterests(commonInterests = emptyList())
                                     }
                                 ) {
                                     Icon(
@@ -427,14 +339,17 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 5.dp)
+                            .padding(dimensionResource(id = R.dimen.padding_miniscule))
                             .defaultMinSize(minHeight = 72.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Block,
                             contentDescription = null,
                             modifier = Modifier
-                                .padding(start = 16.dp, end = 16.dp)
+                                .padding(
+                                    start = dimensionResource(id = R.dimen.padding_preferences_top),
+                                    end = dimensionResource(id = R.dimen.padding_preferences_end)
+                                )
                         )
                         var blockedWords by remember { mutableStateOf("") }
                         OutlinedTextField(
@@ -484,9 +399,10 @@ fun SettingsScreen(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun PreviewSettings() {
-    SettingsScreen(navController = null)
+    SettingsScreen(
+        navController = null
+    )
 }

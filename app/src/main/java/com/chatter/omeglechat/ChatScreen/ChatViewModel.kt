@@ -1,49 +1,101 @@
 package com.chatter.omeglechat.ChatScreen
 
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.rememberScrollState
+import android.app.Application
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.toMutableStateList
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
-import com.polendina.coreLib.NewConnection
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.viewModelScope
+import com.polendina.lib.NewConnection
 
 import com.chatter.omeglechat.Message
+import com.chatter.omeglechat.preferences.PreferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class ChatViewModel: ViewModel() {
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _messages = MutableLiveData<SnapshotStateList<Message>>()
-    private val _darkThemeState = MutableLiveData<Boolean>()
-    private val _coroutineScope = MutableLiveData<CoroutineScope>()
-    private val _scrollState = MutableLiveData<LazyListState>()
-    private val _commonInterests = MutableLiveData<MutableList<String>>(mutableStateListOf())
-    private val _connectionState = MutableLiveData<String>(String())
-    private val _newConnection = MutableLiveData<NewConnection>()
+//    private val prefDataKeyValueStore = PreferencesDataStore(context = application.applicationContext)
+    private val prefDataKeyValueStore = PreferencesDataStore(context = getApplication<Application>().applicationContext)
 
-    //    val messages = remember { mutableStateListOf<Message>(*messagess.toTypedArray()) }  // Converting a list to a vararg argument. nap
-    val messages = _messages
-    // The current implementation is just a placeholder before actually implementing it properly with a toggle button and whatnot
-    val darkThemeState = _darkThemeState
-    val coroutineScope = _coroutineScope
-    val scrollState = _scrollState
-    val commonInterests = _commonInterests
-    val connectionState = _connectionState
-    val newConnection = _newConnection
+    private var _messages = mutableStateListOf<Message>()
+
+    //    private var _scrollState = rememberScrollState()
+    private var _connectionState = mutableStateOf<String>(String())
+    private var _newConnection = mutableStateOf<NewConnection>(NewConnection())
+    private var _commonInterests = mutableStateListOf<String>()
+
+//    val scrollState = _scrollState
+
+    fun getNewConnection(): MutableState<NewConnection> {
+        return (_newConnection)
+    }
+
+    fun getConnectionState(): MutableState<String> {
+        println("Getting connection state ${_connectionState}")
+        return (_connectionState)
+    }
 
     fun updateConnectionState(newState: String) {
-        _connectionState.postValue(newState)
+        println("Updating connection state ${_connectionState}")
+        _connectionState.value = newState
+    }
+
+    fun getMessages(): SnapshotStateList<Message> {
+        return (_messages)
+    }
+
+    fun addMessage(message: Message) {
+        _messages.add(message)
     }
 
     fun clearMessages() {
-        _messages.postValue(mutableStateListOf())
+        _messages.clear()
     }
-    fun clearCommonInterests() {
-        _commonInterests.postValue(mutableStateListOf())
+
+    fun getCommonInterests(): List<String> {
+        return (_commonInterests)
     }
-    fun addAllCommonInterests(commonInterests: MutableList<String>) {
-        _commonInterests.postValue(commonInterests)
+
+    fun updateCommonInterests(commonInterests: List<String>) {
+        _commonInterests.clear()
+        _commonInterests.addAll(commonInterests)
+        CoroutineScope(IO).launch {
+            // I guess this should be place elsewhere e.g., when the outlined text field loses focus
+            prefDataKeyValueStore.updateCommonInterests(
+                commonInterests = commonInterests.joinToString(separator = ",")
+            )
+        }
+    }
+
+//    fun getScrollState(): LazyListState = {
+//        return (_scrollState)
+//    }
+
+    init {
+        viewModelScope.launch {
+            _commonInterests.clear()
+            _commonInterests.addAll(
+                prefDataKeyValueStore.getUserInterests()
+                    .stateIn(viewModelScope)
+                    .value
+                    .toMutableStateList()
+            )
+        }
+//        updateCommonInterests(commonInterests = PreferencesDataStore(context = context).getUserInterests().collectAsState(
+//            initial = emptyList()
+//        ).value)
+        // Following code causes IllegalStateException
+//        CoroutineScope(context = Dispatchers.Default).launch {
+//            PreferencesDataStore(context = context).getUserInterests().collect {
+//                updateCommonInterests(commonInterests = it)
+//            }
+//        }
     }
 
 }
-val chatViewModel: ChatViewModel = ChatViewModel()

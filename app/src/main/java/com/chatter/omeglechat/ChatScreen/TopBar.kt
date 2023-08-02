@@ -1,6 +1,10 @@
 package com.chatter.omeglechat.ChatScreen
 
+import android.content.res.Configuration.UI_MODE_NIGHT_NO
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -13,27 +17,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.navigation.NavController
-import com.chatter.omeglechat.HomeScreen
-import com.chatter.omeglechat.Screen
+import androidx.compose.ui.tooling.preview.Preview
+import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TopBar(
+internal fun TopChattingBar(
     scrollBehavior: TopAppBarScrollBehavior,
     connectionState: String,
-    navController: NavController?,
-    commonInterests: MutableList<String>,
+    commonInterests: List<String>,
+    searchButtonCallback: () -> Unit,
+    arrowBackCallback: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val showHomeScreen = remember { mutableStateOf(false) }
-    if (showHomeScreen.value) HomeScreen(null)
 
     TopAppBar(
         title = {
@@ -45,7 +44,7 @@ internal fun TopBar(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (commonInterests.size > 0 && commonInterests[0].isNotEmpty()) "You both like ${commonInterests.joinToString(", ") }!" else "",
+                    text = if (commonInterests.isNotEmpty() && commonInterests[0].isNotEmpty()) "You both like ${commonInterests.joinToString(", ") }!" else "",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = Typography.bodySmall,
@@ -54,10 +53,7 @@ internal fun TopBar(
         },
         navigationIcon = {
             IconButton(
-                onClick = {
-//                    showHomeScreen.value = true
-                    navController?.navigate(Screen.HomeScreen.route)
-                }
+                onClick = arrowBackCallback
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -67,25 +63,38 @@ internal fun TopBar(
         },
         actions = {
             IconButton(
-                onClick = {
-//                    if (buttonIconState == Icons.Default.Send) {
-//                    } else if (buttonIconState == Icons.Default.Close) {
-//                    }
-                }
+                onClick = searchButtonCallback
             ) {
-                /*
-                    - Add
-                        - This button should serve as a way to add another user
-                            - It'd only if he's using the same app.
-                 */
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null
                 )
             }
         },
-        colors = TopAppBarDefaults.mediumTopAppBarColors(MaterialTheme.colorScheme.primary),
+        colors = TopAppBarDefaults.mediumTopAppBarColors(MaterialTheme.colorScheme.secondary),
         scrollBehavior = scrollBehavior,
         modifier = Modifier
     )
+}
+
+@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_NO, heightDp = 300)
+@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, heightDp = 300)
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun PreviewTopBar() {
+    OmegleChatTheme() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+           TopChattingBar(
+               scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),   // nap
+               connectionState = "Connected",
+               commonInterests = listOf<String>("Love", "Train"),
+               searchButtonCallback = {},
+               arrowBackCallback = {}
+           )
+        }
+    }
 }

@@ -1,16 +1,25 @@
+rootProject.name = "OmegleChat"
 pluginManagement {
     repositories {
+        gradlePluginPortal()
         google()
         mavenCentral()
-        gradlePluginPortal()
     }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
         mavenCentral()
+        google()
     }
 }
-rootProject.name = "OmegleChat"
-include ':app'
+
+plugins {
+}
+
+rootDir.listFiles().filter { it.isDirectory && !it.isHidden }.forEach {
+    print(it.name)
+}
+
+include(":app")
+include(":api")

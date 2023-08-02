@@ -1,15 +1,13 @@
 package com.chatter.omeglechat
 
-import android.widget.Toast
-import androidx.compose.material3.MaterialTheme
+import android.app.Application
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.chatter.omeglechat.ChatScreen.ChatViewModel
 
 @Composable
 fun Navigation() {
@@ -35,7 +33,9 @@ fun Navigation() {
             WholeDrawer(navController = navController)
         }
         composable(route = Screen.settingsScreen.route) {
-            SettingsScreen(navController = navController)
+            SettingsScreen(
+                navController = navController
+            )
         }
     }
 }

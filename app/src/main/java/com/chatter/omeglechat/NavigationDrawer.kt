@@ -30,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,7 +45,7 @@ fun DrawerHeader(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 40.dp)
+            .padding(vertical = dimensionResource(id = R.dimen.padding_miniscule))
     ) {
         Text(
             text = "Header",
@@ -70,7 +71,7 @@ fun DrawerBody(
                         onitemCallback(item)
                     }
                     )
-                    .padding(60.dp)
+                    .padding(dimensionResource(id = R.dimen.padding_medium))
             ) {
                 Icon(
                     imageVector = item.icon,
