@@ -1,12 +1,8 @@
 package com.chatter.omeglechat
 
-import android.app.Application
-import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,11 +25,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,18 +45,15 @@ import com.alorma.compose.settings.ui.SettingsList
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
 import com.chatter.omeglechat.ChatScreen.ChatViewModel
-import com.chatter.omeglechat.preferences.PreferencesDataStore
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
-
-import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController?,
-    chatViewModel: ChatViewModel = viewModel(),
+    chatViewModel: ChatViewModel,
     modifier: Modifier = Modifier
 ) {
     val currentLocalContext = LocalContext.current
@@ -277,11 +268,13 @@ fun SettingsScreen(
                             singleLine = true,
                             onValueChange = { newValue ->
                                 chatViewModel.updateCommonInterests(commonInterests = newValue.split(", "))
+                                chatViewModel.saveUserInterests(commonInterests = newValue.split(", "))
                             },
                             trailingIcon = {
                                 IconButton(
                                     onClick = {
                                         chatViewModel.updateCommonInterests(commonInterests = emptyList())
+                                        chatViewModel.saveUserInterests(commonInterests = emptyList())
                                     }
                                 ) {
                                     Icon(
@@ -403,6 +396,7 @@ fun SettingsScreen(
 @Composable
 fun PreviewSettings() {
     SettingsScreen(
-        navController = null
+        navController = null,
+        chatViewModel = viewModel<ChatViewModel>()
     )
 }

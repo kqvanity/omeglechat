@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.polendina.lib.NewConnection
 
@@ -37,12 +36,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getConnectionState(): MutableState<String> {
-        println("Getting connection state ${_connectionState}")
         return (_connectionState)
     }
 
     fun updateConnectionState(newState: String) {
-        println("Updating connection state ${_connectionState}")
         _connectionState.value = newState
     }
 
@@ -65,9 +62,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun updateCommonInterests(commonInterests: List<String>) {
         _commonInterests.clear()
         _commonInterests.addAll(commonInterests)
+    }
+    fun saveUserInterests(commonInterests: List<String>) {
         CoroutineScope(IO).launch {
             // I guess this should be place elsewhere e.g., when the outlined text field loses focus
-            prefDataKeyValueStore.updateCommonInterests(
+            prefDataKeyValueStore.updateUserInterests(
                 commonInterests = commonInterests.joinToString(separator = ",")
             )
         }
@@ -78,6 +77,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 //    }
 
     init {
+
         viewModelScope.launch {
             _commonInterests.clear()
             _commonInterests.addAll(
@@ -87,6 +87,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     .toMutableStateList()
             )
         }
+
 //        updateCommonInterests(commonInterests = PreferencesDataStore(context = context).getUserInterests().collectAsState(
 //            initial = emptyList()
 //        ).value)

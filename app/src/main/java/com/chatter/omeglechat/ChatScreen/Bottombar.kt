@@ -24,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
@@ -48,8 +50,11 @@ internal fun BottomBar(
             value = textMessageState,
             placeholder = {
                 Text(
-                    text = "Hello!",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Say Hello!",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = TextStyle(
+                        color = Color.Gray
+                    )
                 )
             },
             colors = TextFieldDefaults.textFieldColors(
@@ -59,7 +64,10 @@ internal fun BottomBar(
                 IconButton(
                     onClick = onTerminateClick,
                 ) {
-                    Icon(imageVector = Icons.Outlined.Info, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null
+                    )
                 }
             },
             trailingIcon = {
@@ -68,7 +76,10 @@ internal fun BottomBar(
                         onSendClick(textMessageState)
                     }
                 ) {
-                    Icon(imageVector = Icons.Filled.Send, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Filled.Send,
+                        contentDescription = null
+                    )
                 }
             },
             onValueChange = onValueChange ,

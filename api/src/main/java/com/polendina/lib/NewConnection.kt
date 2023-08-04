@@ -4,10 +4,17 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
+import retrofit2.awaitResponse
+import java.net.URI
 import kotlin.math.floor
+import kotlin.reflect.typeOf
 
 class NewConnection {
 
@@ -30,20 +37,23 @@ class NewConnection {
      * Send POST request to obtain events, then parse them.
      * The internal parsing function recursively calls this function for long-polling.
      */
-    private fun eventsRemoteRequest(): Unit {
+    private suspend fun eventsRemoteRequest(): Unit {
         okHttpStuff(
             fullUrl = "https://front36.omegle.com/events",
             headers = okHttpHeaders,
             requestBody = FormBody.Builder().add("id", this.clientId).build()
-        ) {
+        ).let {
             val responseBody = it.body
-            eventsRemoteRequest()
             try {
-                val eventResponseArray: JsonArray? = Gson().fromJson(responseBody?.string(), JsonArray::class.java)
-                parseEvents(eventResponseArray)
-            } catch (exception: JsonSyntaxException) {
-//                    TODO("Implement something that mitigates the case of being just disconnected, the site returning non-JsonArray value")
+                responseBody?.apply {
+                    parseEvents(Gson().fromJson(this.string(), JsonArray::class.java))
+                }
+            } catch (exception: IllegalStateException) {
+                responseBody?.apply {
+                    parseEvents(Gson().fromJson(this.string(), JsonObject::class.java))
+                }
             }
+            eventsRemoteRequest()
         }
     }
 
@@ -51,12 +61,12 @@ class NewConnection {
      * Send a terminating request to the server, that you no longer want to match with a user with common interests.
      * It's often automatically sent by the web client after 10 seconds, if no matches were found.
      */
-    fun stopLookingForCommonInterests() {
+    suspend fun stopLookingForCommonInterests() {
         okHttpStuff(
             fullUrl = "https://front46.omegle.com/stoplookingforcommonlikes",
             headers = okHttpHeaders,
             requestBody = FormBody.Builder().add("id", this.clientId).build()
-        ) {
+        ).let {
             if (it.code != 200 && it.body?.string() != "win") {
             }
         }
@@ -66,12 +76,12 @@ class NewConnection {
      * Send a disconnect request to the user.
      * It's not mandatory for the client, as it can generally generate another ID, but the official implementation is so, as it signal the server hence the other user.
      */
-    fun disconnect() {
+    suspend fun disconnect() {
         okHttpStuff(
             fullUrl = "https://front46.omegle.com/disconnect",
             headers = okHttpHeaders,
             requestBody = FormBody.Builder().add("id", this.clientId).build()
-        ) {
+        ).let {
             if (it.code != 200 && it.body?.string() != "win") {
 //                throw Exception(
 //                    message = "Disconnect from user",
@@ -95,7 +105,7 @@ class NewConnection {
     /*
         - Parse user return Object
      */
-    private fun parseEvents(response: Any?): Unit {
+    private suspend fun parseEvents(response: Any?): Unit {
 
         var responseString: String = ""
 
@@ -110,9 +120,19 @@ class NewConnection {
         when (responseString) {
             ("connected") -> {
                 var commonInterests = listOf<String>()
+                var speakSameLanguage: Boolean = false
                 try {
-                    commonInterests = (response as JsonArray).get(1).asJsonArray.get(1).asJsonArray.map { it.asString }.toList()
+                    (response as JsonArray).toList().forEach {
+                        it.asJsonArray.get(0).asString.apply {
+                            if (equals("serverMessage")) {
+                                speakSameLanguage = true
+                            } else if (equals("commonLikes")) {
+                                commonInterests = it.asJsonArray.get(1).asJsonArray.map { it.asString }.toList()
+                            }
+                        }
+                    }
                 } catch (exception: IndexOutOfBoundsException) { }
+
                 observer?.onConnected(commonInterests = commonInterests)
             }
             ("typing") -> observer?.onTyping()
@@ -142,7 +162,7 @@ class NewConnection {
      *
      * @param text The text message that's to be sent
      */
-    fun sendText(text: String): Unit {
+    suspend fun sendText(text: String): Unit {
         okHttpStuff(
             fullUrl = "https://front22.omegle.com/send",
             headers = okHttpHeaders,
@@ -155,7 +175,7 @@ class NewConnection {
 //                            .addFormDataPart("msg", text)
 //                            .addFormDataPart( "id", this.clientId)
 //                            .build()
-        ) {
+        ).let {
             if (it.code != 200 && it.body?.string() != "win") {
 //                throw Exception(
 //                    message = "Outgoing message not delivered",
@@ -204,46 +224,33 @@ class NewConnection {
     fun getCCValue(): String {
         return (this.ccValue)
     }
-    private fun setCCValue(callback: () -> Unit): Unit {
+    suspend fun setCCValue(): Unit {
         okHttpStuff(
             fullUrl = "https://waw4.omegle.com/check",
             headers = emptyOkHttpHeaders,
             requestBody = DEFAULT_REQUEST_BODY
-        ) {
-            this.ccValue = it.body!!.string()
-            callback()
+        ).body?.let {
+            this.ccValue = it.string()
         }
     }
 
     /**
      * Ignite a new remote session with remote recipient.
      */
-    fun initalizeConnection(): Unit {
-        // todo: I guess this URL can be enhanced to have more of a idiomatic approach towards it.
-        val url: String = HttpUrl.Builder()
-            .scheme("https")
-            .host("front36.omegle.com")
-            .addPathSegment("start")
-            .addQueryParameter("caps", "recaptcha2,t3")
-            .addQueryParameter("firstevents", "1")
-            .addQueryParameter("spid", "")
-            .addQueryParameter("randid", this.randomId)
-            .addQueryParameter("cc", this.ccValue)
-            .addQueryParameter("topics", this.commonInterests.map { "\"${it}\"" }.toList().toString())
-            .addQueryParameter("lang", "en")
-            .build()
-            .toString()
-
-        // Initialize connection with someone
-        okHttpStuff(
-            fullUrl = url,
-            headers = emptyOkHttpHeaders,
-            requestBody = DEFAULT_REQUEST_BODY
-        ) {
-            it.body?.run {
-                val eventResponse: JsonObject = Gson().fromJson(it.body?.string(), JsonObject::class.java)
-                setClientId(clientId = eventResponse.get("clientID").asString)
-                parseEvents(eventResponse)
+    suspend fun initalizeConnection(): Unit {
+        val response = retrofitInstance.initializeConnection(mapOf(
+            "caps" to "recaptcha2,t3",
+            "firstevents" to "1",
+            "spid" to "",
+            "randid" to this.randomId,
+            "cc" to this.ccValue,
+            "topics" to URI(null, null, this.commonInterests.map { "\"${it}\"" }.toList().toString(), null).rawPath,
+            "lang" to "en"
+        )).awaitResponse()
+        if (response.isSuccessful) {
+            response.body()?.let {
+                setClientId(clientId = it.clientID)
+                parseEvents(it.events)
                 eventsRemoteRequest()
             }
         }
@@ -252,7 +259,7 @@ class NewConnection {
     /**
      * Obtain various metadata about the website e.g., count, antinudeservers, spyQueueTime, antinudepercent, spyeeQueueTime, timestamp, servers
      */
-    fun obtainSiteMetadata(): JsonObject? {
+    suspend fun obtainSiteMetadata(): JsonObject? {
         var response: JsonObject? = null;
         okHttpStuff(
             fullUrl = HttpUrl.Builder()
@@ -260,14 +267,12 @@ class NewConnection {
                 .host("front36.omegle.com")
                 .addPathSegment("status")
                 .addQueryParameter("nocache", "7182637182637")
-                .addQueryParameter("randid", "${this.randomId}")
+                .addQueryParameter("randid", this.randomId)
                 .build()
                 .toString(),
             headers = emptyOkHttpHeaders
-        ) {
-            it.body.run {
-                response = Gson().fromJson(it.body?.string(), JsonObject::class.java)
-            }
+        ).body?.run {
+            response = Gson().fromJson(this.string(), JsonObject::class.java)
         }
         return (response)
     }
@@ -284,13 +289,24 @@ class NewConnection {
         this.commonInterests.addAll(commonInterests)
     }
 
+//    init {
+//        setRandomId()
+//        setCCValue()
+//    }
+
     /**
      * Ignite a new connection, by setting the random ID and CC value, then initialize a connection with a random recipient.
      */
-    fun start() {
+    suspend fun start() {
         setRandomId()
-        setCCValue() {
-            initalizeConnection()
+        CoroutineScope(Dispatchers.IO).launch {
+            if (ccValue.isEmpty()) {
+                setCCValue()
+            }
+        }.invokeOnCompletion {
+            CoroutineScope(Dispatchers.IO).launch {
+                initalizeConnection()
+            }
         }
     }
 

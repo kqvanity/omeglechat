@@ -39,6 +39,11 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.mutableStateListOf
 
 import com.polendina.lib.ConnectionObserver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 data class Message(
     val id: Int,
@@ -64,31 +69,18 @@ fun ChatScreen(
     navController: NavController?
 ) {
     val currentLocalContext = LocalContext.current
-
     val chatViewModel = viewModel<ChatViewModel>()
-
-    val newConnection by remember {
-        chatViewModel.getNewConnection()
-    }
-    val connectionState by remember {
-        chatViewModel.getConnectionState()
-    }
-    val messages = remember {
-        chatViewModel.getMessages()
-    }
+    val newConnection by remember { chatViewModel.getNewConnection() }
+    val connectionState by remember { chatViewModel.getConnectionState() }
+    val messages = remember { chatViewModel.getMessages() }
 //    val scrollState = chatViewModel.scrollState
     val scrollState = rememberLazyListState()
-
 //    val coroutineScope by chatViewModel.coroutineScope.observeAsState(rememberCoroutineScope())
     val coroutineScope = rememberCoroutineScope()
-
     val userPreferences = PreferencesDataStore(context = currentLocalContext)
     // General user interests (saved in the settings DataStore, and the matching interests returned by Omegle's server)
     val userInterests by userPreferences.getUserInterests().collectAsState(initial = listOf())
-    val commonInterests = remember {
-        chatViewModel.getCommonInterests()
-    }
-
+    val commonInterests = remember { chatViewModel.getCommonInterests() }
     val prohibitedIds = remember { mutableStateListOf<String>() }
 
     newConnection.setObserver(
@@ -104,12 +96,11 @@ fun ChatScreen(
                     chatViewModel.updateConnectionState(newState = ConnectionStates.DISCONNECTED.state)
                     chatViewModel.updateCommonInterests(commonInterests = listOf())
                     // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
-                    newConnection.disconnect()
-                    if (newConnection.getCCValue().isEmpty()) {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        newConnection.disconnect()
+                        newConnection.setCommonInterests(userInterests.toMutableList())
                         newConnection.start()
                     }
-                    newConnection.setCommonInterests(userInterests.toMutableList())
-                    newConnection.initalizeConnection()
                 }
             }
 
@@ -123,7 +114,9 @@ fun ChatScreen(
                     chatViewModel.clearMessages()
                     chatViewModel.updateCommonInterests(mutableListOf<String>())
                     newConnection.setCommonInterests(userInterests.toMutableList())
-                    newConnection.initalizeConnection()
+                    CoroutineScope(Dispatchers.IO).launch {
+                        newConnection.start()
+                    }
                 }
             }
 
@@ -180,7 +173,9 @@ fun ChatScreen(
                         - I guess this button should have some other implementation for the onClick callback
                             - for example if the TextField content is empty, there the Send button is deactivated in some way
                     */
-                    newConnection.sendText(textMessageState)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        newConnection.sendText(textMessageState)
+                    }
                     chatViewModel.addMessage(Message(0, textMessageState))
                     chatViewModel.updateConnectionState(newState = ConnectionStates.MESSAGE.state)
                     textMessageState = ""
@@ -191,12 +186,11 @@ fun ChatScreen(
                     chatViewModel.updateConnectionState(newState = ConnectionStates.DISCONNECTED.state)
                     chatViewModel.updateCommonInterests(listOf())
                     // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
-                    newConnection.disconnect()
-                    if (newConnection.getCCValue().isEmpty()) {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        newConnection.disconnect()  // This should be refined or something. I can't just sent a disconnect request at every single brand opening of the chatting screen
+                        newConnection.setCommonInterests(userInterests.toMutableList())
                         newConnection.start()
                     }
-                    newConnection.setCommonInterests(userInterests.toMutableList())
-                    newConnection.initalizeConnection()
                 },
                 onValueChange = {
                     textMessageState = it

@@ -1,14 +1,18 @@
 package com.polendina.lib
 
-import okhttp3.Call
-import okhttp3.Callback
+import com.google.gson.JsonArray
 import okhttp3.ConnectionPool
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
-import java.io.IOException
-//import okio.IOException
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.QueryMap
+import retrofit2.http.POST
 import java.util.concurrent.TimeUnit
 
 val okHttpClient: OkHttpClient = OkHttpClient().newBuilder()
@@ -23,12 +27,34 @@ val okHttpClient: OkHttpClient = OkHttpClient().newBuilder()
     .connectionPool(ConnectionPool())
     .build()
 
-fun okHttpStuff(
+data class StartResponse (
+    val events: JsonArray,
+    val clientID: String
+)
+interface RetrofitResponse {
+    @GET("start")
+    fun initializeConnection(@QueryMap(encoded = true) querys: Map<String, String>): retrofit2.Call<StartResponse>
+}
+
+val verboseOkHttpClient = OkHttpClient()
+    .newBuilder()
+    .addInterceptor (
+        HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
+    )
+    .build()
+
+val retrofitInstance = Retrofit.Builder()
+    .baseUrl("https://front36.omegle.com/")
+    .addConverterFactory(GsonConverterFactory.create())
+    .client(verboseOkHttpClient)
+    .build()
+    .create(RetrofitResponse::class.java)
+
+suspend fun okHttpStuff(
     fullUrl: String,
     headers: okhttp3.Headers,
     requestBody: RequestBody? = null,
-    callback: (Response) -> Unit
-): Unit {
+): Response {
 
     val requestBuilder: Request.Builder = Request.Builder()
         .url(fullUrl)
@@ -40,15 +66,6 @@ fun okHttpStuff(
         requestBuilder.get()
     }
 
-    val request: Request = requestBuilder.build()
-
-    okHttpClient.newCall(request).enqueue(object : Callback {
-        override fun onFailure(call: Call, exception: IOException) {
-            // TODO
-        }
-        override fun onResponse(call: Call, response: Response) {
-            callback(response)
-        }
-    })
+   return okHttpClient.newCall(request = requestBuilder.build()).execute()
 
 }

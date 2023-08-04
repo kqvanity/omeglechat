@@ -30,7 +30,7 @@ class PreferencesDataStore(
     companion object {
         val ENABLE_NOTIFICATIONS = booleanPreferencesKey(name = "enable_notifications")
         val ENABLE_DARK_MODE = booleanPreferencesKey(name = "enable_dark_mode")
-        val COMMON_INTERESTS = stringPreferencesKey(name = "common_interests")
+        val USER_INTERESTS = stringPreferencesKey(name = "user_interests")
         val ENABLE_LANGUAGE_MATCH = booleanPreferencesKey(name = "enable_language_match")
         val AGE = intPreferencesKey(name = "user_age")
         val AUTO_REPLY = booleanPreferencesKey(name = "auto_reply")
@@ -40,12 +40,11 @@ class PreferencesDataStore(
 //        val commonInterests: Preferences.Key<String> = stringPreferencesKey("interests")
 //    }
 
-    fun getUserInterests(): Flow<List<String>> = context.dataStore.data.map { preferences ->
-//        preferences[PreferenceKeys.commonInterests]?.split(",") ?: emptyList()
-        preferences[COMMON_INTERESTS]?.split(", ") ?: emptyList()
+    fun getUserInterests(): Flow<List<String>> = context.dataStore.data.map {
+        it[USER_INTERESTS]?.split(",") ?: emptyList()
     }
-    suspend fun updateCommonInterests(commonInterests: String) = context.dataStore.edit {
-        it[COMMON_INTERESTS] = commonInterests
+    suspend fun updateUserInterests(commonInterests: String) = context.dataStore.edit {
+        it[USER_INTERESTS] = commonInterests
     }
 
 }
