@@ -51,25 +51,13 @@ data class Message(
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_NO)
-@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
-@Composable
-fun PreviewChatScreen() {
-    OmegleChatTheme {
-        ChatScreen(
-            navController = null,
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    modifier: Modifier = Modifier,
-    navController: NavController?
+    chatViewModel: ChatViewModel = viewModel(),
+    navController: NavController?,
+    modifier: Modifier = Modifier
 ) {
     val currentLocalContext = LocalContext.current
-    val chatViewModel = viewModel<ChatViewModel>()
     val newConnection by remember { chatViewModel.getNewConnection() }
     val connectionState by remember { chatViewModel.getConnectionState() }
     val messages = remember { chatViewModel.getMessages() }
@@ -222,3 +210,16 @@ private enum class ConnectionStates(val state: String) {
 
     override fun toString(): String = this.state
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_NO)
+@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@Composable
+fun PreviewChatScreen() {
+    OmegleChatTheme {
+        ChatScreen(
+            navController = null,
+        )
+    }
+}
+

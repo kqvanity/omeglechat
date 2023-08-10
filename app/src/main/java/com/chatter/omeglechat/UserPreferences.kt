@@ -45,6 +45,7 @@ import com.alorma.compose.settings.ui.SettingsList
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
 import com.chatter.omeglechat.ChatScreen.ChatViewModel
+import com.chatter.omeglechat.preferences.PreferencesViewModel
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
 
@@ -53,7 +54,8 @@ import com.chatter.omeglechat.ui.theme.Typography
 @Composable
 fun SettingsScreen(
     navController: NavController?,
-    chatViewModel: ChatViewModel,
+    chatViewModel: ChatViewModel = viewModel(),
+    preferencesViewModel: PreferencesViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
     val currentLocalContext = LocalContext.current
@@ -268,13 +270,13 @@ fun SettingsScreen(
                             singleLine = true,
                             onValueChange = { newValue ->
                                 chatViewModel.updateCommonInterests(commonInterests = newValue.split(", "))
-                                chatViewModel.saveUserInterests(commonInterests = newValue.split(", "))
+                                preferencesViewModel.saveUserInterests(commonInterests = newValue.split(", "))
                             },
                             trailingIcon = {
                                 IconButton(
                                     onClick = {
                                         chatViewModel.updateCommonInterests(commonInterests = emptyList())
-                                        chatViewModel.saveUserInterests(commonInterests = emptyList())
+                                        preferencesViewModel.saveUserInterests(commonInterests = emptyList())
                                     }
                                 ) {
                                     Icon(

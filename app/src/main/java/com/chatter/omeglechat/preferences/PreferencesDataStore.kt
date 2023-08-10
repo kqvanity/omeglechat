@@ -34,6 +34,7 @@ class PreferencesDataStore(
         val ENABLE_LANGUAGE_MATCH = booleanPreferencesKey(name = "enable_language_match")
         val AGE = intPreferencesKey(name = "user_age")
         val AUTO_REPLY = booleanPreferencesKey(name = "auto_reply")
+        val AUTO_SKIP = booleanPreferencesKey(name = "auto_skip")
     }
 
 //    private object PreferenceKeys {
@@ -46,6 +47,9 @@ class PreferencesDataStore(
     suspend fun updateUserInterests(commonInterests: String) = context.dataStore.edit {
         it[USER_INTERESTS] = commonInterests
     }
+
+//    fun getAutoSkip() = context.dataStore.data. {
+//    }
 
 }
 data class UserPreferences(

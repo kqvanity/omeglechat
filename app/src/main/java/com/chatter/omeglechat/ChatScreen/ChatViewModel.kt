@@ -5,29 +5,32 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import com.polendina.lib.NewConnection
 
 import com.chatter.omeglechat.Message
-import com.chatter.omeglechat.preferences.PreferencesDataStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
 
-class ChatViewModel(application: Application) : AndroidViewModel(application) {
+/*
+    -
+        - Extension function that consider the application's lifecycle.
+        -  Collect From Kotlin Flows While Considering the app Lifecycle In Android Jetpack Compose
+            - If the app's lifecycle is ignored, it can lead to an unexpected behavior.
+                - It can consume unnecessary resources.
+*/
 
-//    private val prefDataKeyValueStore = PreferencesDataStore(context = application.applicationContext)
-    private val prefDataKeyValueStore = PreferencesDataStore(context = getApplication<Application>().applicationContext)
+class ChatViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
     private var _messages = mutableStateListOf<Message>()
 
+    private var counter = MutableStateFlow(value = listOf<String>())
+
     //    private var _scrollState = rememberScrollState()
-    private var _connectionState = mutableStateOf<String>(String())
-    private var _newConnection = mutableStateOf<NewConnection>(NewConnection())
-    private var _commonInterests = mutableStateListOf<String>()
+    private var _connectionState = mutableStateOf(String())
+    private var _newConnection = mutableStateOf(NewConnection())
+    private val _commonInterests = mutableStateListOf<String>()
 
 //    val scrollState = _scrollState
 
@@ -43,6 +46,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         _connectionState.value = newState
     }
 
+    // todo: I'm not sure if I should be using a full-fledged getter function. Also look up encapsulation.
     fun getMessages(): SnapshotStateList<Message> {
         return (_messages)
     }
@@ -63,40 +67,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         _commonInterests.clear()
         _commonInterests.addAll(commonInterests)
     }
-    fun saveUserInterests(commonInterests: List<String>) {
-        CoroutineScope(IO).launch {
-            // I guess this should be place elsewhere e.g., when the outlined text field loses focus
-            prefDataKeyValueStore.updateUserInterests(
-                commonInterests = commonInterests.joinToString(separator = ",")
-            )
-        }
-    }
 
 //    fun getScrollState(): LazyListState = {
 //        return (_scrollState)
 //    }
-
-    init {
-
-        viewModelScope.launch {
-            _commonInterests.clear()
-            _commonInterests.addAll(
-                prefDataKeyValueStore.getUserInterests()
-                    .stateIn(viewModelScope)
-                    .value
-                    .toMutableStateList()
-            )
-        }
-
-//        updateCommonInterests(commonInterests = PreferencesDataStore(context = context).getUserInterests().collectAsState(
-//            initial = emptyList()
-//        ).value)
-        // Following code causes IllegalStateException
-//        CoroutineScope(context = Dispatchers.Default).launch {
-//            PreferencesDataStore(context = context).getUserInterests().collect {
-//                updateCommonInterests(commonInterests = it)
-//            }
-//        }
-    }
 
 }
