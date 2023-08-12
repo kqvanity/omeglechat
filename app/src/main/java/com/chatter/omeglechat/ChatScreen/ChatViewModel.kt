@@ -2,8 +2,10 @@ package com.chatter.omeglechat.ChatScreen
 
 import android.app.Application
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import com.polendina.lib.NewConnection
@@ -24,52 +26,25 @@ class ChatViewModel(
 ) : AndroidViewModel(application) {
 
     private var _messages = mutableStateListOf<Message>()
-
     private var counter = MutableStateFlow(value = listOf<String>())
-
     //    private var _scrollState = rememberScrollState()
-    private var _connectionState = mutableStateOf(String())
-    private var _newConnection = mutableStateOf(NewConnection())
-    private val _commonInterests = mutableStateListOf<String>()
+    private var _connectionState by mutableStateOf(String())
+    private var _newConnection by mutableStateOf(NewConnection())
+    private var _commonInterests = mutableStateListOf<String>()
 
-//    val scrollState = _scrollState
+    var newConnection
+        get() = _newConnection
+        set(value) { _newConnection = value }
+    var connectionState
+        get() = _connectionState
+        set(value) { _connectionState = value }
 
-    fun getNewConnection(): MutableState<NewConnection> {
-        return (_newConnection)
-    }
+    var messages
+        get() = _messages
+        set(value) { _messages = value }
 
-    fun getConnectionState(): MutableState<String> {
-        return (_connectionState)
-    }
-
-    fun updateConnectionState(newState: String) {
-        _connectionState.value = newState
-    }
-
-    // todo: I'm not sure if I should be using a full-fledged getter function. Also look up encapsulation.
-    fun getMessages(): SnapshotStateList<Message> {
-        return (_messages)
-    }
-
-    fun addMessage(message: Message) {
-        _messages.add(message)
-    }
-
-    fun clearMessages() {
-        _messages.clear()
-    }
-
-    fun getCommonInterests(): List<String> {
-        return (_commonInterests)
-    }
-
-    fun updateCommonInterests(commonInterests: List<String>) {
-        _commonInterests.clear()
-        _commonInterests.addAll(commonInterests)
-    }
-
-//    fun getScrollState(): LazyListState = {
-//        return (_scrollState)
-//    }
+    var commonInterests
+        get() = _commonInterests
+        set(value) { _commonInterests = value }
 
 }

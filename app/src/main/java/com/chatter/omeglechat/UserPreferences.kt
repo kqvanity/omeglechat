@@ -270,13 +270,13 @@ fun SettingsScreen(
                             singleLine = true,
                             onValueChange = { newValue ->
                                 chatViewModel.updateCommonInterests(commonInterests = newValue.split(", "))
-                                preferencesViewModel.saveUserInterests(commonInterests = newValue.split(", "))
+                                preferencesViewModel.saveUserInterests(userInterests = newValue.split(", "))
                             },
                             trailingIcon = {
                                 IconButton(
                                     onClick = {
                                         chatViewModel.updateCommonInterests(commonInterests = emptyList())
-                                        preferencesViewModel.saveUserInterests(commonInterests = emptyList())
+                                        preferencesViewModel.saveUserInterests(userInterests = emptyList())
                                     }
                                 ) {
                                     Icon(

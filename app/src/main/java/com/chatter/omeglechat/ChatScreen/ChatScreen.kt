@@ -1,6 +1,5 @@
 package com.chatter.omeglechat
 
-import android.app.Application
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
@@ -37,13 +36,14 @@ import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 
 import androidx.activity.viewModels
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.toMutableStateList
+import com.chatter.omeglechat.preferences.PreferencesViewModel
 
 import com.polendina.lib.ConnectionObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 data class Message(
     val id: Int,
@@ -54,83 +54,78 @@ data class Message(
 @Composable
 fun ChatScreen(
     chatViewModel: ChatViewModel = viewModel(),
+    preferencesViewModel: PreferencesViewModel = viewModel(),
     navController: NavController?,
     modifier: Modifier = Modifier
 ) {
     val currentLocalContext = LocalContext.current
-    val newConnection by remember { chatViewModel.getNewConnection() }
-    val connectionState by remember { chatViewModel.getConnectionState() }
-    val messages = remember { chatViewModel.getMessages() }
-//    val scrollState = chatViewModel.scrollState
     val scrollState = rememberLazyListState()
 //    val coroutineScope by chatViewModel.coroutineScope.observeAsState(rememberCoroutineScope())
     val coroutineScope = rememberCoroutineScope()
-    val userPreferences = PreferencesDataStore(context = currentLocalContext)
     // General user interests (saved in the settings DataStore, and the matching interests returned by Omegle's server)
-    val userInterests by userPreferences.getUserInterests().collectAsState(initial = listOf())
-    val commonInterests = remember { chatViewModel.getCommonInterests() }
+//    val userInterests by PreferencesDataStore(context = currentLocalContext).getUserInterests().collectAsState(initial = listOf())
+    val userInterests = preferencesViewModel.user
     val prohibitedIds = remember { mutableStateListOf<String>() }
 
-    newConnection.setObserver(
-        object : ConnectionObserver {
+    chatViewModel.newConnection.setObserver(object : ConnectionObserver {
 
-            override fun onConnected(usersCommonInterests: List<String>) {
-                chatViewModel.updateConnectionState(newState = ConnectionStates.CONNECTED.state)
-                chatViewModel.updateCommonInterests(commonInterests = usersCommonInterests)
+        override fun onConnected(usersCommonInterests: List<String>) {
+            chatViewModel.connectionState = ConnectionStates.CONNECTED.state
+            chatViewModel.commonInterests = usersCommonInterests.toMutableStateList()
 
-                if (prohibitedIds.contains(newConnection.getClientId())) {
-                    Log.d("BLOCK", "Blocked ${newConnection.getClientId()}")
-                    chatViewModel.clearMessages()
-                    chatViewModel.updateConnectionState(newState = ConnectionStates.DISCONNECTED.state)
-                    chatViewModel.updateCommonInterests(commonInterests = listOf())
-                    // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
-                    coroutineScope.launch(Dispatchers.IO) {
-                        newConnection.disconnect()
-                        newConnection.setCommonInterests(userInterests.toMutableList())
-                        newConnection.start()
-                    }
+            if (prohibitedIds.contains(chatViewModel.newConnection.getClientId())) {
+                Log.d("BLOCK", "Blocked ${chatViewModel.newConnection.getClientId()}")
+                chatViewModel.messages.clear()
+                chatViewModel.connectionState = ConnectionStates.DISCONNECTED.state
+                chatViewModel.commonInterests.clear()
+                // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
+                coroutineScope.launch(Dispatchers.IO) {
+                    chatViewModel.newConnection.disconnect()
+                    chatViewModel.newConnection.setCommonInterests(userInterests.toMutableList())
+                    chatViewModel.newConnection.start()
                 }
             }
-
-            override fun onRecaptchaRequired() { chatViewModel.updateConnectionState(newState = ConnectionStates.RECAPTCHA_REQUIRED.state) }
-            override fun onTyping() { chatViewModel.updateConnectionState(newState = ConnectionStates.USER_TYPING.state) }
-            override fun onStoppedTyping() { chatViewModel.updateConnectionState(newState = ConnectionStates.STALE.state)  }
-
-            override fun onUserDisconnected() {
-                chatViewModel.updateConnectionState(newState = ConnectionStates.DISCONNECTED.state)
-                if (messages.size < 10) {       // Longer conversations should be preserved, in the case of leftover exchange information.
-                    chatViewModel.clearMessages()
-                    chatViewModel.updateCommonInterests(mutableListOf<String>())
-                    newConnection.setCommonInterests(userInterests.toMutableList())
-                    CoroutineScope(Dispatchers.IO).launch {
-                        newConnection.start()
-                    }
-                }
-            }
-
-            override fun onWaiting() { chatViewModel.updateConnectionState(newState = ConnectionStates.WAITING.state) }
-
-            override fun onGotMessage(message: String) {
-                chatViewModel.updateConnectionState(newState = ConnectionStates.MESSAGE.state)
-                chatViewModel.addMessage(Message(1, message))
-                scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
-            }
-
-            override fun onError() { println("Error occurred") }
-            override fun onEvent(response: String) { println("Event!") }
         }
-    )
+
+        override fun onRecaptchaRequired() { chatViewModel.connectionState = ConnectionStates.RECAPTCHA_REQUIRED.state }
+        override fun onTyping() { chatViewModel.connectionState = ConnectionStates.USER_TYPING.state }
+        override fun onStoppedTyping() { chatViewModel.connectionState = ConnectionStates.STALE.state }
+
+        override fun onUserDisconnected() {
+            chatViewModel.connectionState = ConnectionStates.DISCONNECTED.state
+            if (chatViewModel.messages.size < 10) {       // Longer conversations should be preserved, in the case of leftover exchange information.
+                chatViewModel.messages.clear()
+                chatViewModel.commonInterests.clear()
+                chatViewModel.newConnection.setCommonInterests(userInterests.toMutableList())
+                CoroutineScope(Dispatchers.IO).launch {
+                    chatViewModel.newConnection.start()
+                }
+            }
+        }
+
+        override fun onWaiting() { chatViewModel.connectionState = ConnectionStates.WAITING.state }
+
+        override fun onGotMessage(message: String) {
+            chatViewModel.connectionState = ConnectionStates.MESSAGE.state
+            chatViewModel.messages.add(Message(1, message))
+            scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
+        }
+
+        override fun onError() { println("Error occurred") }
+        override fun onEvent(response: String) { println("Event!") }
+
+    })
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         topBar = {
             TopChattingBar(
                 scrollBehavior = scrollBehavior,
-                connectionState = connectionState,
-                commonInterests = commonInterests,
+                connectionState = chatViewModel.connectionState,
+                commonInterests = chatViewModel.commonInterests,
                 searchButtonCallback = {
-                    prohibitedIds.add(newConnection.getClientId())
-                    Log.d("BLOCK", newConnection.getClientId())
+                    prohibitedIds.add(chatViewModel.newConnection.getClientId())
+                    Log.d("BLOCK", chatViewModel.newConnection.getClientId())
                 },
                 arrowBackCallback = {
                     navController?.navigate(Screen.HomeScreen.route)
@@ -141,7 +136,7 @@ fun ChatScreen(
         content = { paddingValue ->
             MainContent(
                 paddingValue = paddingValue,
-                messages = messages.toMutableList(),
+                messages = chatViewModel.messages.toMutableList(),
                 scrollState = scrollState
             )
         },
@@ -162,22 +157,22 @@ fun ChatScreen(
                             - for example if the TextField content is empty, there the Send button is deactivated in some way
                     */
                     coroutineScope.launch(Dispatchers.IO) {
-                        newConnection.sendText(textMessageState)
+                        chatViewModel.newConnection.sendText(textMessageState)
                     }
-                    chatViewModel.addMessage(Message(0, textMessageState))
-                    chatViewModel.updateConnectionState(newState = ConnectionStates.MESSAGE.state)
+                    chatViewModel.messages.add(Message(0, textMessageState))
+                    chatViewModel.connectionState = ConnectionStates.MESSAGE.state
                     textMessageState = ""
                     scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
                 },
                 onTerminateClick = {
-                    chatViewModel.clearMessages()
-                    chatViewModel.updateConnectionState(newState = ConnectionStates.DISCONNECTED.state)
-                    chatViewModel.updateCommonInterests(listOf())
+                    chatViewModel.messages.clear()
+                    chatViewModel.connectionState = ConnectionStates.DISCONNECTED.state
+                    chatViewModel.commonInterests.clear()
                     // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
                     coroutineScope.launch(Dispatchers.IO) {
-                        newConnection.disconnect()  // This should be refined or something. I can't just sent a disconnect request at every single brand opening of the chatting screen
-                        newConnection.setCommonInterests(userInterests.toMutableList())
-                        newConnection.start()
+                        chatViewModel.newConnection.disconnect()  // This should be refined or something. I can't just sent a disconnect request at every single brand opening of the chatting screen
+                        chatViewModel.newConnection.setCommonInterests(userInterests.toMutableList())
+                        chatViewModel.newConnection.start()
                     }
                 },
                 onValueChange = {
@@ -185,7 +180,7 @@ fun ChatScreen(
 //                        if (textMessageState.isEmpty()) {
 //                        }
                 },
-                enabled = ConnectionStates.values().toMutableList().map { it.state }.contains(connectionState),
+                enabled = ConnectionStates.values().toMutableList().map { it.state }.contains(chatViewModel.connectionState),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(

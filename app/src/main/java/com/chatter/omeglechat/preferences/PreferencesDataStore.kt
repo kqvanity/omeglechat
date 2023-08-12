@@ -44,8 +44,8 @@ class PreferencesDataStore(
     fun getUserInterests(): Flow<List<String>> = context.dataStore.data.map {
         it[USER_INTERESTS]?.split(",") ?: emptyList()
     }
-    suspend fun updateUserInterests(commonInterests: String) = context.dataStore.edit {
-        it[USER_INTERESTS] = commonInterests
+    suspend fun updateUserInterests(userInterests: String) = context.dataStore.edit {
+        it[USER_INTERESTS] = userInterests
     }
 
 //    fun getAutoSkip() = context.dataStore.data. {
