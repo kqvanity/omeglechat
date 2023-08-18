@@ -36,8 +36,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.alorma.compose.settings.ui.SettingsCheckbox
@@ -75,7 +77,7 @@ fun SettingsScreen(
                 SettingsGroup(
                     title = {
                         Text(
-                            text = "Application"
+                            text = stringResource(id = R.string.application)
                         )
                     }
                 ) {
@@ -83,12 +85,12 @@ fun SettingsScreen(
                         enabled = false,
                         title = {
                             Text(
-                                text = "Notifications"
+                                text = stringResource(id = R.string.notifications)
                             )
                         },
                         subtitle = {
                            Text(
-                               text = "Show notifications of incoming messages when the user is away.",
+                               text = stringResource(id = R.string.show_notifications),
                                style = Typography.bodySmall
                            )
                         },
@@ -103,7 +105,7 @@ fun SettingsScreen(
                         enabled = false,
                         title = {
                             Text(
-                                text = "Dark Mode",
+                                text = stringResource(id = R.string.dark_mode),
                                 style = Typography.bodyLarge
                             )
                         },
@@ -123,7 +125,7 @@ fun SettingsScreen(
                 SettingsGroup (
                     title = {
                         Text(
-                            text = "Profile"
+                            text = stringResource(id = R.string.profile)
                         )
                     }
                 ) {
@@ -140,13 +142,13 @@ fun SettingsScreen(
                         },
                         title = {
                             Text(
-                                text = "Language Match",
+                                text = stringResource(id = R.string.language_match),
                                 style = Typography.bodyLarge
                             )
                         },
                         subtitle = {
                             Text(
-                                text = "Attempt to match with others speaking the same language!",
+                                text = stringResource(id = R.string.match_others),
                                 style = Typography.bodySmall
                             )
                         },
@@ -160,7 +162,7 @@ fun SettingsScreen(
                         enabled = false,
                         title = {
                             Text(
-                                text = "Language",
+                                text = stringResource(id = R.string.language),
                                 style = Typography.bodyLarge
                             )
                         },
@@ -172,7 +174,7 @@ fun SettingsScreen(
                         },
                         subtitle = {
                             Text(
-                                text = "Match with others speaking the same language.",
+                                text = stringResource(id = R.string.match_others),
                                 style = Typography.bodySmall
                             )
                         },
@@ -209,7 +211,7 @@ fun SettingsScreen(
                         enabled = false,
                         title = {
                             Text(
-                                text = "Age"
+                                text = stringResource(id = R.string.age)
                             )
                         },
                         icon = {
@@ -251,7 +253,7 @@ fun SettingsScreen(
                             value = preferencesViewModel.userInterests.joinToString(", "),
                             placeholder = {
                                 Text(
-                                    text = "Youtube, Talk",
+                                    text = stringResource(id = R.string.user_interests),
                                     style = Typography.bodyLarge,
                                     color = Color.LightGray
                                 )
@@ -287,7 +289,7 @@ fun SettingsScreen(
                 SettingsGroup (
                     title = {
                         Text(
-                            text = "Premium"
+                            text = stringResource(id = R.string.premium)
                         )
                     }
                 ) {
@@ -295,13 +297,13 @@ fun SettingsScreen(
                         enabled = false,
                         title = {
                             Text(
-                                text = "Auto reply",
+                                text = stringResource(id = R.string.auto_reply),
                                 style = Typography.bodyLarge
                             )
                         },
                         subtitle = {
                             Text(
-                                text = "Attempt to reply to questions based on defined personal info e.g., name, age, country.",
+                                text = stringResource(id = R.string.auto_reply_description),
                                 style = Typography.bodySmall
                             )
                         },
@@ -342,7 +344,7 @@ fun SettingsScreen(
                             },
                             placeholder = {
                                 Text(
-                                    text = "M, Sex",
+                                    text = stringResource(id = R.string.blocked_words),
                                     color = Color.LightGray
                                 )
                             },
@@ -358,13 +360,13 @@ fun SettingsScreen(
                         enabled = false,
                         title = {
                             Text(
-                                text = "Auto translate",
+                                text = stringResource(id = R.string.auto_translate),
                                 style = Typography.bodyLarge
                             )
                         },
                         subtitle = {
                             Text(
-                                text = "Auto translate incoming and outgoing words and phrases!",
+                                text = stringResource(id = R.string.auto_translate_description),
                                 style = Typography.bodySmall
                             )
                         },

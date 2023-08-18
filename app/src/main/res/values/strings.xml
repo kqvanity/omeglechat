@@ -2,4 +2,20 @@
     <string name="app_name">OmegleChat</string>
     <string name="show_more">Show more</string>
     <string name="show_less">Show less</string>
+    <string name="application">Application</string>
+    <string name="notifications">Notifications</string>
+    <string name="show_notifications">Show notifications of incoming messages when the user is away.</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="profile">Profile</string>
+    <string name="language_match">Language Match</string>
+    <string name="match_others">Attempt to match with others speaking the same language!</string>
+    <string name="language">Language</string>
+    <string name="age">Age</string>
+    <string name="user_interests">Youtube, Talk</string>
+    <string name="auto_reply">Auto Reply</string>
+    <string name="auto_reply_description">Attempt to reply to questions based on defined personal info e.g., name, age, country.</string>
+    <string name="premium">Premium</string>
+    <string name="auto_translate">Auto Translate</string>
+    <string name="auto_translate_description">Auto translate incoming and outgoing words and phrases!</string>
+    <string name="blocked_words">M, Sex</string>
 </resources>
