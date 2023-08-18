@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -58,7 +59,10 @@ internal fun BottomBar(
                 )
             },
             colors = TextFieldDefaults.textFieldColors(
-                textColor = MaterialTheme.colorScheme.onBackground
+                textColor = MaterialTheme.colorScheme.onBackground,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
             ),
             leadingIcon = {
                 IconButton(
@@ -86,6 +90,7 @@ internal fun BottomBar(
             modifier = Modifier
                 .padding(vertical = 10.dp)
                 .fillMaxWidth()
+                .height(70.dp)
                 .clip(CircleShape)
         )
     }

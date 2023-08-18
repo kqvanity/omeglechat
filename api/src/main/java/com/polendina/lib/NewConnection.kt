@@ -6,7 +6,6 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import okhttp3.FormBody
 import okhttp3.HttpUrl
@@ -14,7 +13,6 @@ import okhttp3.RequestBody
 import retrofit2.awaitResponse
 import java.net.URI
 import kotlin.math.floor
-import kotlin.reflect.typeOf
 
 class NewConnection {
 
@@ -42,15 +40,19 @@ class NewConnection {
             fullUrl = "https://front36.omegle.com/events",
             headers = okHttpHeaders,
             requestBody = FormBody.Builder().add("id", this.clientId).build()
-        ).let {
-            val responseBody = it.body
-            try {
-                responseBody?.apply {
+        ).apply {
+            body?.apply {
+                try {
                     parseEvents(Gson().fromJson(this.string(), JsonArray::class.java))
-                }
-            } catch (exception: IllegalStateException) {
-                responseBody?.apply {
-                    parseEvents(Gson().fromJson(this.string(), JsonObject::class.java))
+                } catch (exception: JsonSyntaxException) {
+                    exception.printStackTrace()
+                    apply {
+                        try {
+                            parseEvents(Gson().fromJson(this.string(), JsonObject::class.java))
+                        } catch (exception: IllegalStateException) {
+                            exception.printStackTrace()
+                        }
+                    }
                 }
             }
             eventsRemoteRequest()
@@ -288,11 +290,6 @@ class NewConnection {
         this.commonInterests.clear()
         this.commonInterests.addAll(commonInterests)
     }
-
-//    init {
-//        setRandomId()
-//        setCCValue()
-//    }
 
     /**
      * Ignite a new connection, by setting the random ID and CC value, then initialize a connection with a random recipient.

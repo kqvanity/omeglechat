@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -44,17 +45,14 @@ import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
-import com.chatter.omeglechat.ChatScreen.ChatViewModel
 import com.chatter.omeglechat.preferences.PreferencesViewModel
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController?,
-    chatViewModel: ChatViewModel = viewModel(),
     preferencesViewModel: PreferencesViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -65,15 +63,6 @@ fun SettingsScreen(
                 .fillMaxSize()
 //                .padding(20.dp)
         ) {
-//            coroutineScope.launch {
-//                val interests =
-//                    PrefDataKeyValueStore(context = currentLocalContext).watchFlag()
-//                        .stateIn(
-//                            scope = coroutineScope,
-//                            started = SharingStarted.Lazily,
-//                            initialValue = ""
-//                        )
-//            }
             items (count = 1) {
 
 //                AlertDialog(onDismissRequest = { /*TODO*/ }, confirmButton = { /*TODO*/ })
@@ -259,7 +248,7 @@ fun SettingsScreen(
                         )
 //                        val userInterests = prefDataKeyValueStore.getUserInterests().collectAsState(initial = emptyList())
                         OutlinedTextField(
-                            value = chatViewModel.getCommonInterests().joinToString(", "),
+                            value = preferencesViewModel.userInterests.joinToString(", "),
                             placeholder = {
                                 Text(
                                     text = "Youtube, Talk",
@@ -269,14 +258,12 @@ fun SettingsScreen(
                             },
                             singleLine = true,
                             onValueChange = { newValue ->
-                                chatViewModel.updateCommonInterests(commonInterests = newValue.split(", "))
-                                preferencesViewModel.saveUserInterests(userInterests = newValue.split(", "))
+                                preferencesViewModel.userInterests = newValue.split(", ").toMutableStateList()
                             },
                             trailingIcon = {
                                 IconButton(
                                     onClick = {
-                                        chatViewModel.updateCommonInterests(commonInterests = emptyList())
-                                        preferencesViewModel.saveUserInterests(userInterests = emptyList())
+                                        preferencesViewModel.userInterests = emptyList<String>().toMutableStateList()
                                     }
                                 ) {
                                     Icon(
@@ -398,7 +385,6 @@ fun SettingsScreen(
 @Composable
 fun PreviewSettings() {
     SettingsScreen(
-        navController = null,
-        chatViewModel = viewModel<ChatViewModel>()
+        navController = null
     )
 }

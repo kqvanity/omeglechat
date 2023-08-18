@@ -36,7 +36,6 @@ fun Navigation() {
         composable(route = Screen.settingsScreen.route) {
             SettingsScreen(
                 navController = navController,
-                chatViewModel = viewModel<ChatViewModel>()
             )
         }
     }

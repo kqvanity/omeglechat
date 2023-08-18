@@ -64,7 +64,6 @@ fun ChatScreen(
     val coroutineScope = rememberCoroutineScope()
     // General user interests (saved in the settings DataStore, and the matching interests returned by Omegle's server)
 //    val userInterests by PreferencesDataStore(context = currentLocalContext).getUserInterests().collectAsState(initial = listOf())
-    val userInterests = preferencesViewModel.user
     val prohibitedIds = remember { mutableStateListOf<String>() }
 
     chatViewModel.newConnection.setObserver(object : ConnectionObserver {
@@ -81,7 +80,7 @@ fun ChatScreen(
                 // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
                 coroutineScope.launch(Dispatchers.IO) {
                     chatViewModel.newConnection.disconnect()
-                    chatViewModel.newConnection.setCommonInterests(userInterests.toMutableList())
+                    chatViewModel.newConnection.setCommonInterests(preferencesViewModel.userInterests.toMutableList())
                     chatViewModel.newConnection.start()
                 }
             }
@@ -96,7 +95,7 @@ fun ChatScreen(
             if (chatViewModel.messages.size < 10) {       // Longer conversations should be preserved, in the case of leftover exchange information.
                 chatViewModel.messages.clear()
                 chatViewModel.commonInterests.clear()
-                chatViewModel.newConnection.setCommonInterests(userInterests.toMutableList())
+                chatViewModel.newConnection.setCommonInterests(preferencesViewModel.userInterests.toMutableList())
                 CoroutineScope(Dispatchers.IO).launch {
                     chatViewModel.newConnection.start()
                 }
@@ -171,7 +170,7 @@ fun ChatScreen(
                     // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
                     coroutineScope.launch(Dispatchers.IO) {
                         chatViewModel.newConnection.disconnect()  // This should be refined or something. I can't just sent a disconnect request at every single brand opening of the chatting screen
-                        chatViewModel.newConnection.setCommonInterests(userInterests.toMutableList())
+                        chatViewModel.newConnection.setCommonInterests(preferencesViewModel.userInterests.toMutableList())
                         chatViewModel.newConnection.start()
                     }
                 },
