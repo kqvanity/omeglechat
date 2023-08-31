@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.MenuHostHelper
 import androidx.navigation.NavController
 
 @Composable
@@ -102,36 +104,15 @@ fun WholeDrawer(
     ) {
         DrawerHeader()
         DrawerBody(
-            items = listOf(
-                MenuItem(
-                    id = "Home",
-                    title = "Home",
-                    icon = Icons.Default.Home
-                ),
-                MenuItem(
-                    id = "Chat",
-                    title = "Chat",
-                    icon = Icons.Default.Chat
-                ),
-                MenuItem(
-                    id = "Settings",
-                    title = "Settings",
-                    icon = Icons.Default.Settings
-                ),
-                MenuItem(
-                    id = "Help",
-                    title = "Help",
-                    icon = Icons.Default.Info
-                )
-            ),
+            items = MenuItem.values().toList(),
             onitemCallback = {
-                navController.run {
-                    navController!!
+                navController?.run {
                     currentScreenId.value = it.id
                     when(currentScreenId.value) {
-                        "Home" -> navController.navigate(Screen.HomeScreen.route)
-                        "Chat" -> navController.navigate(Screen.chatScreen.route)
-                        "Settings" -> navController.navigate(Screen.settingsScreen.route)
+                        "home" -> navController.navigate(Screen.HomeScreen.route)
+                        "chat" -> navController.navigate(Screen.chatScreen.route)
+                        "video" -> navController.navigate(Screen.videoScreen.route)
+                        "settings" -> navController.navigate(Screen.settingsScreen.route)
                     }
                 }
             }
@@ -139,11 +120,37 @@ fun WholeDrawer(
     }
 }
 
-data class MenuItem(
+enum class MenuItem(
     val id: String,
     val title: String,
     val icon: ImageVector
-)
+) {
+    HOME(
+        id = "home",
+        title = "Home",
+        icon = Icons.Default.Home
+    ),
+    CHAT(
+        id = "chat",
+        title = "Chat",
+        icon = Icons.Default.Chat
+    ),
+    VIDEO(
+        id = "video",
+        title = "Video",
+        icon = Icons.Default.VideoCall
+    ),
+    SETTINGS(
+        id = "settings",
+        title = "Settings",
+        icon = Icons.Default.Settings
+    ),
+    HELP(
+        id = "help",
+        title = "Help",
+        icon = Icons.Default.Info
+    )
+}
 
 @Preview(showBackground = true)
 @Composable

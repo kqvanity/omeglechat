@@ -19,7 +19,9 @@ android {
             useSupportLibrary = true
         }
     }
-
+    kotlin {
+        jvmToolchain(17)
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -30,17 +32,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility (JavaVersion.VERSION_1_8)
-        targetCompatibility (JavaVersion.VERSION_1_8)
+        sourceCompatibility (JavaVersion.VERSION_17)
+        targetCompatibility (JavaVersion.VERSION_17)
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0"
+        kotlinCompilerExtensionVersion = "1.5.2"
     }
     packagingOptions {
         resources {
@@ -53,20 +55,21 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.activity:activity-compose:1.7.2")
-    implementation(platform("androidx.compose:compose-bom:2022.10.00"))
+    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.core:core-ktx:+")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0")
+    implementation("androidx.compose.material3:material3:1.1.1")
+    implementation("androidx.core:core-ktx:1.10.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2022.10.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Android Studio Preview support
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.google.code.gson:gson:2.10.1")
@@ -74,25 +77,26 @@ dependencies {
 //    implementation ("com.squareup.retrofit2:helpers:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
 
-    implementation("androidx.navigation:navigation-compose:2.6.0")
+    implementation("androidx.navigation:navigation-compose:2.7.1")
 
     api(project(":api"))
-//    implementation files("/home/sinful/Documents/kotlin/OmegleAPI/coreLib/build/libs/coreLib-0.0.1.jar")
+//    implementation files("/home/polendina/Documents/kotlin/OmegleAPI/coreLib/build/libs/coreLib-0.0.1.jar")
 
     // Preferences/Settings library (Implementing settings in the app without the boilerplate)
-    implementation ("com.github.alorma:compose-settings-ui-m3:0.25.0")
+    implementation ("com.github.alorma:compose-settings-ui-m3:0.27.0")
 
     // Extended icons
-    implementation("androidx.compose.material:material-icons-extended:1.6.0-alpha02")
+    implementation("androidx.compose.material:material-icons-extended:1.6.0-alpha04")
 
-    implementation("androidx.compose.runtime:runtime-livedata:1.4.3")
+    // LiveData
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.0")
 
     // Preferences DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Coroutines Lifecycle Scope
     val lifecycle_version = "2.6.1"

@@ -2,7 +2,6 @@ package com.polendina.lib
 
 import com.google.gson.JsonArray
 import okhttp3.ConnectionPool
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -12,7 +11,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.QueryMap
-import retrofit2.http.POST
 import java.util.concurrent.TimeUnit
 
 val okHttpClient: OkHttpClient = OkHttpClient().newBuilder()

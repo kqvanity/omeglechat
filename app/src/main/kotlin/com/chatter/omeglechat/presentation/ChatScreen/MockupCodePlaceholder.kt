@@ -1,7 +1,5 @@
 package com.chatter.omeglechat.ChatScreen
 
-import com.chatter.omeglechat.Message
-
 /*
     - DEBUGGING
         - This messages variable is for debugging purposes only
@@ -27,4 +25,12 @@ internal val chatMessages = mutableListOf<Message>(
     )
 )
 
-private val commonInterests = listOf("youtube", "politics", "gayming'", "Collaboration", "World of warcraft", "CSGOG", "toilet", "others")
+internal val commonInterests = listOf(
+    "youtube",
+    "politics",
+    "gaming'",
+    "talk",
+    "World of warcraft",
+    "CSGO",
+    "others"
+)
