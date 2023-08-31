@@ -34,7 +34,21 @@ fun Navigation() {
             )
         }
         composable(route = Screen.drawerScreen.route) {
-            WholeDrawer(navController = navController)
+            WholeDrawer(
+                navController = navController,
+                onItemCallback = {
+                    navController.run {
+//                        val currentScreenId = rememberSaveable { mutableStateOf("") }
+//                        currentScreenId.value = it.id
+                        when(it.id) {
+                            "home" -> navController.navigate(Screen.HomeScreen.route)
+                            "chat" -> navController.navigate(Screen.chatScreen.route)
+                            "video" -> navController.navigate(Screen.videoScreen.route)
+                            "settings" -> navController.navigate(Screen.settingsScreen.route)
+                        }
+                    }
+                }
+            )
         }
         composable(route = Screen.settingsScreen.route) {
             SettingsScreen(

@@ -10,11 +10,11 @@ A new Android client for the [Omegle website](https://www.omegle.ecom).
 
 ## Showcase
 <span>
-    <img src="./media/chat.jpg" width="300" height="600"> &nbsp;
-    <img src="./media/home.jpg" width="300" height="600"> &nbsp;
-    <img src="./media/onboarding.jpg" width="300" height="600"> &nbsp;
-    <img src="./media/settings.jpg" width="300" height="600"> &nbsp;
-    <img src="./media/slider.jpg" width="300" height="600"> &nbsp;
+    <img src="./media/onboarding.jpg" width="300" height="700"> &nbsp;
+    <img src="./media/home.jpg" width="300" height="700"> &nbsp;
+    <img src="./media/NavigationDrawer.png" width="300" height="700"> &nbsp;
+    <img src="./media/settings.jpg" width="300" height="700"> &nbsp;
+    <img src="./media/chat.jpg" width="300" height="700"> &nbsp;
 </span>
 
 ## Installation

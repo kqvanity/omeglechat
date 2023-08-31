@@ -86,7 +86,6 @@ fun ChatScreen(
         modifier = Modifier
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     )
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
