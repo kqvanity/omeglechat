@@ -22,4 +22,3 @@ plugins {
 }
 
 include(":app")
-include(":api")

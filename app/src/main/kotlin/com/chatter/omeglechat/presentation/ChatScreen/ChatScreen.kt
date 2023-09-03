@@ -74,7 +74,7 @@ fun ChatScreen(
                     chatViewModel.textMessage.value = it
                 },
                 // TODO: It's a relic of the past (before refactoring business logic code to the chatViewModel). Refine it later on.
-//                enabled = ConnectionStates.values().toMutableList().map { it.state }.contains(chatViewModel.connectionState),
+//                enabled = ConnectionStates.values().toMutableList().map { it.displayName }.contains(chatViewModel.connectionState),
                 enabled = true,
                 modifier = Modifier
                     .fillMaxWidth()

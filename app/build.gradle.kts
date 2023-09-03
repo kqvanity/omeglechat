@@ -71,15 +71,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-//    implementation ("com.squareup.retrofit2:helpers:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
-
     implementation("androidx.navigation:navigation-compose:2.7.1")
 
-    api(project(":api"))
+//    api(project(":api"))
 //    implementation files("/home/polendina/Documents/kotlin/OmegleAPI/coreLib/build/libs/coreLib-0.0.1.jar")
 
     // Preferences/Settings library (Implementing settings in the app without the boilerplate)
@@ -106,4 +100,17 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
 
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
+
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Okhttp
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    // Retrofit
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+//    implementation ("com.squareup.retrofit2:helpers:2.9.0")
+
+    testImplementation(kotlin("test"))
 }

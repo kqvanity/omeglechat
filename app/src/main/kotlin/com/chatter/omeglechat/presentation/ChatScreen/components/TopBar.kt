@@ -20,9 +20,11 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.chatter.omeglechat.R
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
 
@@ -47,7 +49,7 @@ internal fun TopChattingBar(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (commonInterests.isNotEmpty() && commonInterests[0].isNotEmpty()) "You both like ${commonInterests.joinToString(", ") }!" else "",
+                    text = if (commonInterests.isNotEmpty() && commonInterests.first().isNotEmpty()) "You both like ${commonInterests.joinToString(", ") }!" else "",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = Typography.bodySmall,
@@ -89,19 +91,19 @@ internal fun TopChattingBar(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun PreviewTopBar() {
-    OmegleChatTheme() {
+//    OmegleChatTheme() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.secondaryContainer)
         ) {
            TopChattingBar(
-               scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),   // nap
-               connectionState = "Connected",
+               scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+               connectionState = stringResource(id = R.string.connected),
                commonInterests = listOf<String>("Love", "Train"),
                searchButtonCallback = {},
                arrowBackCallback = {}
            )
         }
-    }
+//    }
 }

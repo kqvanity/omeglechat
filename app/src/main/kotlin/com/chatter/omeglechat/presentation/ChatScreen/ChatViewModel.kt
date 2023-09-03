@@ -8,7 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
-import com.polendina.lib.NewConnection
+import com.chatter.omeglechat.data.network.NewConnection
+import com.chatter.omeglechat.domain.model.ConnectionStates
 
 import com.chatter.omeglechat.preferences.PreferencesViewModel
 import com.polendina.lib.ConnectionObserver
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 
 class ChatViewModel(
 //) : ViewModel() {
-    application: Application
+    application: Application = Application()
 ) : AndroidViewModel(application) {
 
     var messages = mutableStateListOf<Message>()
@@ -36,76 +37,74 @@ class ChatViewModel(
     //    private var _scrollState = rememberScrollState()
     var connectionState by mutableStateOf(String())
         private set
-    private val newConnection by mutableStateOf(NewConnection())
+//    private val newConnection by mutableStateOf(NewConnection())
     var commonInterests = mutableStateListOf<String>()
         private set
 
     // General user interests (saved in the settings DataStore, and the matching interests returned by Omegle's server)
 //    val userInterests by PreferencesDataStore(context = application).getUserInterests().collectAsState(initial = listOf())
-    private lateinit var _userInterests: MutableList<String>
+    private lateinit var userInterests: MutableList<String>
 
     private val prohibitedIds = mutableStateListOf<String>()
 
-    private var _textMessage = mutableStateOf("")
-    val textMessage = _textMessage
-//    var textMessageState by remember { mutableStateOf("") }
+    var textMessage = mutableStateOf("")
 
     fun sendTextMessage() {
         CoroutineScope(Dispatchers.IO).launch {
-            newConnection.sendText(_textMessage.value)
+            NewConnection.sendText(textMessage.value)
+            messages.add(Message(0, textMessage.value))
+            connectionState = ConnectionStates.MESSAGE.displayName
+            textMessage.value = ""
         }
-        messages.add(Message(0, _textMessage.value))
-        connectionState = ConnectionStates.MESSAGE.state
-        _textMessage.value = ""
     }
 
     fun terminate() {
         messages.clear()
-        connectionState = ConnectionStates.DISCONNECTED.state
+        connectionState = ConnectionStates.DISCONNECTED.displayName
         commonInterests.clear()
         // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
         CoroutineScope(Dispatchers.IO).launch {
-            newConnection.disconnect()  // This should be refined or something. I can't just sent a disconnect request at every single brand opening of the chatting screen
-            newConnection.setCommonInterests(_userInterests)
-            newConnection.start()
+            NewConnection.disconnect()  // This should be refined or something. I can't just sent a disconnect request at every single brand opening of the chatting screen
+            NewConnection.setCommonInterests(userInterests)
+            NewConnection.start()
         }
     }
 
     private fun initializeObservers() {
-        newConnection.setObserver(object : ConnectionObserver {
+        NewConnection.setObserver(object : ConnectionObserver {
             override fun onConnected(usersCommonInterests: List<String>) {
-                connectionState = ConnectionStates.CONNECTED.state
+                connectionState = ConnectionStates.CONNECTED.displayName
                 commonInterests = usersCommonInterests.toMutableStateList()
-                if (prohibitedIds.contains(newConnection.getClientId())) {
+                if (prohibitedIds.contains(NewConnection.getClientId())) {
 //                        Log.d("BLOCK", "Blocked ${newConnection.getClientId()}")
                     messages.clear()
-                    connectionState = ConnectionStates.DISCONNECTED.state
+                    connectionState = ConnectionStates.DISCONNECTED.displayName
                     commonInterests.clear()
                     // I guess this line should be relocated to somewhere else. Maybe when first loading the chat screen?
                     CoroutineScope(Dispatchers.IO).launch {
-                        newConnection.disconnect()
-                        newConnection.setCommonInterests(_userInterests.toMutableList())
-                        newConnection.start()
+                        NewConnection.disconnect()
+                        NewConnection.setCommonInterests(userInterests.toMutableList())
+                        NewConnection.start()
                     }
                 }
             }
-            override fun onRecaptchaRequired() { connectionState = ConnectionStates.RECAPTCHA_REQUIRED.state }
-            override fun onTyping() { connectionState = ConnectionStates.USER_TYPING.state }
-            override fun onStoppedTyping() { connectionState = ConnectionStates.STALE.state }
+            override fun onRecaptchaRequired() { connectionState = ConnectionStates.RECAPTCHA_REQUIRED.displayName }
+            override fun onTyping() { connectionState = ConnectionStates.TYPING.displayName }
+            override fun onStoppedTyping() { connectionState = ConnectionStates.STALE.displayName }
             override fun onUserDisconnected() {
-                connectionState = ConnectionStates.DISCONNECTED.state
+                connectionState = ConnectionStates.DISCONNECTED.displayName
                 if (messages.size < 10) {       // Longer conversations should be preserved, in the case of leftover exchange information.
                     messages.clear()
                     commonInterests.clear()
-                    newConnection.setCommonInterests(_userInterests.toMutableList())
+                    NewConnection.setCommonInterests(userInterests.toMutableList())
                     CoroutineScope(Dispatchers.IO).launch {
-                        newConnection.start()
+                        NewConnection.start()
                     }
                 }
             }
-            override fun onWaiting() { connectionState = ConnectionStates.WAITING.state }
+            override fun onWaiting() { connectionState = ConnectionStates.WAITING.displayName }
             override fun onGotMessage(message: String) {
-                connectionState = ConnectionStates.MESSAGE.state
+                connectionState = ConnectionStates.MESSAGE.displayName
                 messages.add(Message(1, message))
 //                    scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
             }
@@ -117,26 +116,17 @@ class ChatViewModel(
     override fun onCleared() {
         super.onCleared()
         CoroutineScope(Dispatchers.IO).launch {
-            newConnection.disconnect()
+            NewConnection.disconnect()
         }
     }
 
     init {
-        _userInterests = PreferencesViewModel(application).userInterests
+//        userInterests = PreferencesViewModel(application).userInterests
+        userInterests = mutableListOf("talk")
         initializeObservers()
     }
 }
 
-private enum class ConnectionStates(val state: String) {
-    CONNECTED(state = "Connected"),
-    DISCONNECTED(state = "Disconnected"),
-    USER_TYPING(state = "User Typing"),
-    MESSAGE(state = "Message"),
-    WAITING(state = "Waiting"),
-    RECAPTCHA_REQUIRED(state = "Recaptcha required!"),
-    STALE(state = "Stale");
-    override fun toString(): String = this.state
-}
 data class Message(
     val id: Int,
     val text: String

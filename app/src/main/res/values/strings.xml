@@ -18,4 +18,5 @@
     <string name="auto_translate">Auto Translate</string>
     <string name="auto_translate_description">Auto translate incoming and outgoing words and phrases!</string>
     <string name="blocked_words">M, Sex</string>
+    <string name="connected">Connected</string>
 </resources>
