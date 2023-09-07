@@ -3,14 +3,12 @@ package com.chatter.omeglechat.ChatScreen
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -18,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +39,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.chatter.omeglechat.R
+import com.chatter.omeglechat.presentation.ChatScreen.chatMessages
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
 
@@ -173,6 +171,25 @@ internal fun MainContent(
                 }
             }
         }
+    }
+}
+
+/**
+ * Scroll to the bottom of a lazy list. It can be conveniently used when in conversation with each new message in the current user view.
+ *
+ * @param scrollState The state of the lazy list, upon which this method will work on.
+ */
+internal suspend fun scrollToBottom(
+    scrollState: LazyListState,
+) {
+    /*
+        - I guess it needs a bit of refinement.
+            - Like what if the user explicitly scrolled up.
+            - Should i force him down with each new message, or maybe i should notify him of a new incoming message like whatsapp does?
+     */
+    val lazyColumnItemsCount = scrollState.layoutInfo.totalItemsCount   // nap
+    if (lazyColumnItemsCount > 0) {
+        scrollState.animateScrollToItem(lazyColumnItemsCount - 1)     // Scroll to the last item. Still not working fully
     }
 }
 

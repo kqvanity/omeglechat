@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,12 +72,12 @@ internal fun TopChattingBar(
                 onClick = searchButtonCallback
             ) {
                 Icon(
-                    imageVector = Icons.Default.Info,
+                    imageVector = Icons.Outlined.Info,
                     contentDescription = null
                 )
             }
         },
-        colors = TopAppBarDefaults.mediumTopAppBarColors(MaterialTheme.colorScheme.secondary),
+        colors = TopAppBarDefaults.mediumTopAppBarColors(MaterialTheme.colorScheme.surfaceVariant),
         scrollBehavior = scrollBehavior,
         modifier = Modifier
             .clip(RoundedCornerShape(
@@ -91,11 +92,11 @@ internal fun TopChattingBar(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun PreviewTopBar() {
-//    OmegleChatTheme() {
+    OmegleChatTheme() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.secondaryContainer)
+                .background(MaterialTheme.colorScheme.background)
         ) {
            TopChattingBar(
                scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
@@ -105,5 +106,5 @@ fun PreviewTopBar() {
                arrowBackCallback = {}
            )
         }
-//    }
+    }
 }

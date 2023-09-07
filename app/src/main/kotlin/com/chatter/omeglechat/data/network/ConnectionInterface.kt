@@ -10,4 +10,5 @@ interface ConnectionObserver {
     fun onUserDisconnected()
     fun onWaiting()
     fun onError()
+    fun onConnectionError()
 }

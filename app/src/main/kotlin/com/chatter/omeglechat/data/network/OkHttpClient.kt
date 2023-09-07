@@ -27,7 +27,7 @@ val okHttpClient: OkHttpClient = OkHttpClient().newBuilder()
     .build()
 
 data class StartResponse (
-    val events: JsonArray,
+    val events: List<List<String>>,
     val clientID: String
 )
 interface RetrofitResponse {

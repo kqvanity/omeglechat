@@ -2,6 +2,7 @@ package com.chatter.omeglechat.ChatScreen
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +11,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import com.chatter.omeglechat.data.network.NewConnection
 import com.chatter.omeglechat.domain.model.ConnectionStates
+import com.chatter.omeglechat.preferences.PreferencesDataStore
 
 import com.chatter.omeglechat.preferences.PreferencesViewModel
 import com.polendina.lib.ConnectionObserver
@@ -31,6 +33,7 @@ class ChatViewModel(
     application: Application = Application()
 ) : AndroidViewModel(application) {
 
+//    var messages = chatMessages.toMutableStateList()
     var messages = mutableStateListOf<Message>()
         private set
     private var counter = MutableStateFlow(value = listOf<String>())
@@ -42,7 +45,6 @@ class ChatViewModel(
         private set
 
     // General user interests (saved in the settings DataStore, and the matching interests returned by Omegle's server)
-//    val userInterests by PreferencesDataStore(context = application).getUserInterests().collectAsState(initial = listOf())
     private lateinit var userInterests: MutableList<String>
 
     private val prohibitedIds = mutableStateListOf<String>()
@@ -67,16 +69,16 @@ class ChatViewModel(
             NewConnection.disconnect()  // This should be refined or something. I can't just sent a disconnect request at every single brand opening of the chatting screen
             NewConnection.setCommonInterests(userInterests)
             NewConnection.start()
+            NewConnection.continueOn()
         }
     }
 
     private fun initializeObservers() {
-        NewConnection.setObserver(object : ConnectionObserver {
+        NewConnection.connectionObserver = object : ConnectionObserver {
             override fun onConnected(usersCommonInterests: List<String>) {
                 connectionState = ConnectionStates.CONNECTED.displayName
                 commonInterests = usersCommonInterests.toMutableStateList()
-                if (prohibitedIds.contains(NewConnection.getClientId())) {
-//                        Log.d("BLOCK", "Blocked ${newConnection.getClientId()}")
+                if (prohibitedIds.contains(NewConnection.clientId)) {
                     messages.clear()
                     connectionState = ConnectionStates.DISCONNECTED.displayName
                     commonInterests.clear()
@@ -93,7 +95,8 @@ class ChatViewModel(
             override fun onStoppedTyping() { connectionState = ConnectionStates.STALE.displayName }
             override fun onUserDisconnected() {
                 connectionState = ConnectionStates.DISCONNECTED.displayName
-                if (messages.size < 10) {       // Longer conversations should be preserved, in the case of leftover exchange information.
+                // Longer conversations should be preserved, in the case of leftover exchange information.
+                if (messages.size < 10) {
                     messages.clear()
                     commonInterests.clear()
                     NewConnection.setCommonInterests(userInterests.toMutableList())
@@ -102,15 +105,15 @@ class ChatViewModel(
                     }
                 }
             }
+            override fun onConnectionError() { TODO("Not yet implemented") }
             override fun onWaiting() { connectionState = ConnectionStates.WAITING.displayName }
             override fun onGotMessage(message: String) {
                 connectionState = ConnectionStates.MESSAGE.displayName
                 messages.add(Message(1, message))
-//                    scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
             }
             override fun onError() { Log.d("ERROR", "Error Occurred") }
             override fun onEvent(response: String) { Log.d("ERROR", "Event!") }
-        })
+        }
     }
 
     override fun onCleared() {

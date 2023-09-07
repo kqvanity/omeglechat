@@ -24,6 +24,9 @@ import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,13 +47,12 @@ fun ChatScreen(
                 connectionState = chatViewModel.connectionState,
                 commonInterests = chatViewModel.commonInterests,
                 searchButtonCallback = {
-//                    prohibitedIds.add(chatViewModel.newConnection.getClientId())
-//                    Log.d("BLOCK", chatViewModel.newConnection.getClientId())
+                    // TODO: I guess I'll implement another dropdown menu or something, entailing things like block ,save chatlog, etc
                 },
                 arrowBackCallback = arrowBackCallback
             )
         },
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        containerColor = MaterialTheme.colorScheme.background,
         content = { paddingValue ->
             MainContent(
                 paddingValue = paddingValue,
@@ -59,29 +61,35 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            BottomBar(
-                 textMessageState = chatViewModel.textMessage.value,
-                 onSendClick = {
-                    //  I guess this button should have some other implementation for the onClick callback
-                    // for example if the TextField content is empty, there the Send button is deactivated in some way
-                    chatViewModel.sendTextMessage()
-                    scrollToBottom(scrollState = scrollState, coroutineScope = coroutineScope)
-                },
-                onTerminateClick = {
-                    chatViewModel.terminate()
-                },
-                onValueChange = {
-                    chatViewModel.textMessage.value = it
-                },
-                // TODO: It's a relic of the past (before refactoring business logic code to the chatViewModel). Refine it later on.
-//                enabled = ConnectionStates.values().toMutableList().map { it.displayName }.contains(chatViewModel.connectionState),
-                enabled = true,
+            Row (
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = 5.dp
-                    )
-            )
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                BottomBar(
+                    textMessageState = chatViewModel.textMessage.value,
+                    onSendClick = {
+                        //  I guess this button should have some other implementation for the onClick callback
+                        // for example if the TextField content is empty, there the Send button is deactivated in some way
+                        chatViewModel.sendTextMessage()
+                        coroutineScope.launch { scrollToBottom(scrollState = scrollState) }
+                    },
+                    onTerminateClick = {
+                        chatViewModel.terminate()
+                    },
+                    onValueChange = {
+                        chatViewModel.textMessage.value = it
+                    },
+                    // TODO: It's a relic of the past (before refactoring business logic code to the chatViewModel). Refine it later on.
+//                enabled = ConnectionStates.values().toMutableList().map { it.displayName }.contains(chatViewModel.connectionState),
+                    enabled = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 5.dp
+                        )
+                )
+            }
         },
         modifier = Modifier
             .nestedScroll(scrollBehavior.nestedScrollConnection)
@@ -99,4 +107,3 @@ fun PreviewChatScreen() {
         )
     }
 }
-

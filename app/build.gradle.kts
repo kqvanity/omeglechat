@@ -113,4 +113,20 @@ dependencies {
 //    implementation ("com.squareup.retrofit2:helpers:2.9.0")
 
     testImplementation(kotlin("test"))
+
+    // Local Unit tests
+    testImplementation("androidx.test:core:1.4.0")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.arch.core:core-testing:2.1.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
+    testImplementation("com.google.truth:truth:1.1.3")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.1.0-alpha04")
+
+}
+
+tasks.withType<Test>().configureEach {
+    testLogging {
+        showStandardStreams = true
+    }
 }

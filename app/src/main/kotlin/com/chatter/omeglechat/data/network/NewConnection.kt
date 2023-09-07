@@ -1,6 +1,5 @@
 package com.chatter.omeglechat.data.network
 
-import android.util.Log
 import com.chatter.omeglechat.domain.model.ConnectionStates
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -8,23 +7,25 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.polendina.lib.ConnectionObserver
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import retrofit2.Response
 import retrofit2.awaitResponse
 import java.net.URI
 import kotlin.math.floor
+import kotlin.reflect.typeOf
 
 object NewConnection {
 
-    private val commonInterests: MutableList<String> = mutableListOf<String>()
+    private val commonInterests: MutableList<String> = mutableListOf()
 
     /**
      * Send POST request to obtain events.
      *
      * @param clientId The remote user clientID.
      */
-    private suspend fun eventsRemoteRequest(clientId: String): okhttp3.Response {
+    suspend fun eventsRemoteRequest(clientId: String): okhttp3.Response {
         return okHttpStuff(
             fullUrl = BaseUrls.EVENTS.url,
             headers = okHttpHeaders,
@@ -34,8 +35,9 @@ object NewConnection {
 
     /**
      * Parse remote events.
+     *
      */
-    private suspend fun parseEventsRemoteRequest(response: okhttp3.Response) {
+    suspend fun parseEventsRemoteRequest(response: okhttp3.Response) {
         response.body?.apply {
             try {
                 parseEvents(Gson().fromJson(this.string(), JsonArray::class.java))
@@ -88,29 +90,36 @@ object NewConnection {
         }
     }
 
-    private var observer: ConnectionObserver? = null
-
     /**
-     * Set the connection observer dictating the behavior of incoming events.
+     * The connection observer dictating the behavior of incoming events.
      *
-     * @param observer The connection observer class implementing the ConnectionObserver interface.
      */
-    fun setObserver(observer: ConnectionObserver) {
-        NewConnection.observer = observer
-    }
+    var connectionObserver: ConnectionObserver? = null
 
     /**
      * Parse user return Object
      */
-    private suspend fun parseEvents(response: Any?): Unit {
+    fun parseEvents(response: Any?): Unit {
 
         var responseString: String = ""
 
-        if (response is JsonObject) {
-            responseString = response.getAsJsonArray("events").get(0).asJsonArray.get(0).asString
-        } else if (response is JsonArray) {
-            if (response.size() != 0) {         // Mitigating empty responses. They take place when the conversation is on a halt for example.
-                responseString = response.get(0).asJsonArray.get(0).asString
+        when(response) {
+            // When the remote server blocks the IP, it sends an empty JSON object {}, with the text message "Error connecting to server. Please try again." at the webpage.
+            is StartResponse -> {
+                if (response.clientID == null) {
+                    responseString = ConnectionStates.CONNECTION_ERROR.state
+                } else {
+                    this@NewConnection.clientId = response.clientID
+                    responseString = response.events.first().first()
+                }
+            }
+            is JsonObject -> {
+                responseString = response.getAsJsonArray("events").get(0).asJsonArray.get(0).asString
+            }
+            is JsonArray -> {
+                if (response.size() != 0) {         // Mitigating empty responses. They take place when the conversation is on a halt for example.
+                    responseString = response.get(0).asJsonArray.get(0).asString
+                }
             }
         }
 
@@ -121,30 +130,33 @@ object NewConnection {
                 var speakSameLanguage: Boolean = false
                 try {
                     (response as JsonArray).toList().forEach {
-                        it.asJsonArray.get(0).asString.apply {
-                            if (equals("serverMessage")) {
-                                speakSameLanguage = true
-                            } else if (equals("commonLikes")) {
-                                commonInterests = it.asJsonArray.get(1).asJsonArray.map { it.asString }.toList()
+                        try {
+                            it.asJsonArray.get(0).asString.apply {
+                                if (equals("serverMessage")) {
+                                    speakSameLanguage = true
+                                } else if (equals("commonLikes")) {
+                                    commonInterests = it.asJsonArray.get(1).asJsonArray.map { it.asString }.toList()
+                                }
                             }
-                        }
+                        } catch (exception: IndexOutOfBoundsException) { }
                     }
-                } catch (exception: IndexOutOfBoundsException) { }
+                } catch (e: ClassCastException) {}
 
-                observer?.onConnected(commonInterests = commonInterests)
+                connectionObserver?.onConnected(commonInterests = commonInterests)
             }
-            ConnectionStates.TYPING.state -> observer?.onTyping()
-            ConnectionStates.STOPPED_TYPING.state -> observer?.onStoppedTyping()
-            ConnectionStates.RECAPTCHA_REQUIRED.state -> observer?.onRecaptchaRequired()
+            ConnectionStates.TYPING.state -> connectionObserver?.onTyping()
+            ConnectionStates.STOPPED_TYPING.state -> connectionObserver?.onStoppedTyping()
+            ConnectionStates.RECAPTCHA_REQUIRED.state -> connectionObserver?.onRecaptchaRequired()
             ConnectionStates.MESSAGE.state -> {
                 val userMessage = (response as JsonArray).get(0).asJsonArray.get(1).asString
-                observer?.onGotMessage(userMessage)
+                connectionObserver?.onGotMessage(userMessage)
             }
-            ConnectionStates.DISCONNECTED.state -> observer?.onUserDisconnected()
-            ConnectionStates.WAITING.state -> observer?.onWaiting()
-            ConnectionStates.ERROR.state -> observer?.onError()
+            ConnectionStates.DISCONNECTED.state -> connectionObserver?.onUserDisconnected()
+            ConnectionStates.WAITING.state -> connectionObserver?.onWaiting()
+            ConnectionStates.ERROR.state -> connectionObserver?.onError()
+            ConnectionStates.CONNECTION_ERROR.state -> connectionObserver?.onConnectionError()
         }
-        observer?.onEvent(responseString)
+        connectionObserver?.onEvent(responseString)
     }
 
     /**
@@ -175,37 +187,20 @@ object NewConnection {
         }
     }
 
-    private var randomId: String = ""
     /**
-     * Generate a random ID used to to connect to another user.
-     * It can be used to evade blocking (if the other user is also using the same blocking technique of the same/similar app)
+     * A random ID used to to connect to another user.
+     *
      */
-    private fun setRandomId(): String {
-        // nao
-        val randomId: String = floor(Math.random() * 1000000000 + 1000000000).toInt()
-            .toString(36)
-            .uppercase()
-        return (randomId)
-    }
+    val randomId: String = floor(Math.random() * 1000000000 + 1000000000).toInt()
+        .toString(36)
+        .uppercase()
 
-    private var clientId: String = String()
     /**
-     * Get the current ID of the remote recipient.
+     * The current ID of the remote recipient.
      * It can be used to temporarily add or block certain users by auto-disconnecting.
      *
-     * @return The ID of the remote recipient
      */
-    fun getClientId(): String {
-        return (clientId)
-    }
-    /**
-     * Set the ID of the remote recipient.
-     *
-     * @param clientId The ID to be set.
-     */
-    private fun setClientId(clientId: String): Unit {
-        NewConnection.clientId = clientId
-    }
+    var clientId: String = String()
 
     private var ccValue: String = ""
     /**
@@ -278,40 +273,47 @@ object NewConnection {
      * Ignite a new connection, by setting the random ID and CC value, then initialize a connection with a random recipient.
      */
     suspend fun start() {
-        setRandomId()
         if (ccValue.isEmpty()) setCCValue()
-        initalizeConnection()
-            .run {
-                if (isSuccessful) {
-                    body()?.let {
-                        setClientId(clientId = it.clientID)
-                        parseEvents(it.events)
+        initalizeConnection().run {
+            if (isSuccessful) body()?.let {
+                parseEvents(it)
+            }
+        }
+    }
 
-                        while(true) {
-                            parseEventsRemoteRequest(eventsRemoteRequest(clientId))
-                        }
-                        // Kotlin flows approach. I've tried to implement flows somehow in this project, but the previous plain while() loop is the only one working (as of now)
-//                        flow {
-//                            while(true) {
-//                                eventsRemoteRequest(clientId)
-//                                emit(eventsRemoteRequest(clientId))
-//                            }
-//                        }.collect {
-////                            eventResponses.add(it)
-//                            Log.d("Gaiming", it.body?.string() ?: "")
-//                            parseEventsRemoteRequest(it)
+    suspend fun continueOn() {
+//                val eventResponses = mutableListOf<Response>()
+//                runBlocking {
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    println("Hello world")
+//                    while (true) {
+//                            .let {
+//                            eventResponses.add(it)
 //                        }
+//                    }
+//                }
+//                println("New event")
+//                CoroutineScope(Dispatchers.Default).launch {
+//                    NewConnection.apply {
+//                        parseEventsRemoteRequest(eventsRemoteRequest(clientId))
+//                    }
+//                }
 
-//                        CoroutineScope(Dispatchers.IO).launch {
-//                        }
-//                        CoroutineScope(Dispatchers.IO).launch {
-//                            if (eventResponses.isNotEmpty()) {
-//                                parseEventsRemoteRequest(eventResponses.first())
-//                                eventResponses.removeFirst()
-//                            }
-//                        }
-                    }
+
+//                    NewConnection.eventsRemoteRequest(NewConnection.clientId)
+//                    NewConnection.parseEventsRemoteRequest(eventResponses.last())
+//                    eventResponses.removeLast()
+//                    }
+
+        // Kotlin flows approach. I've tried to implement flows somehow in this project, but the previous plain while() loop is the only one working (as of now)
+            flow<okhttp3.Response> {
+                while(true) {
+                    emit(eventsRemoteRequest(clientId))
+                    println("Request")
                 }
+            }.collect {
+                parseEventsRemoteRequest(it)
+                println("Collect")
             }
     }
 
