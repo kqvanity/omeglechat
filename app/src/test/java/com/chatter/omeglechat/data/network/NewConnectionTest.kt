@@ -1,15 +1,13 @@
 package com.chatter.omeglechat.data.network
 
+import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.polendina.lib.ConnectionObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectIndexed
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newCoroutineContext
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.setMain
-import okhttp3.Response
 
 import org.junit.Test
 import java.io.InputStream
@@ -20,15 +18,12 @@ class NewConnectionTest {
 
     @Test
     fun start() {
-        val messages = listOf("How are you doing", "What are you doing rn", "F", "I'm horny how about you")
         NewConnection.connectionObserver = object: ConnectionObserver {
             override fun onWaiting() {
                 println("Waiting")
             }
 
-            override fun onEvent(response: String) {
-
-            }
+            override fun onEvent(response: String) { }
             override fun onConnected(commonInterests: List<String>) {
                 println("Connected")
             }
@@ -41,11 +36,19 @@ class NewConnectionTest {
             override fun onRecaptchaRequired() {
                 println("Recaptcha required")
             }
+            val messages = listOf("Hi", "How's life", "Hello")
             override fun onGotMessage(message: String) {
                 println(">> ${message}")
+//                if (!message.equals("moree")) {
+//                    coroutineIOScope.launch {
+//                        NewConnection.disconnect()
+//                        NewConnection.start()
+//                        NewConnection.continueOn()
+//                    }
+//                }
                 messages.random().let {
-                    println(">> ${it}")
                     coroutineIOScope.launch {
+                        println(">> ${it}")
                         NewConnection.sendText(it)
                     }
                 }
@@ -64,14 +67,24 @@ class NewConnectionTest {
             }
         }
         runBlocking {
-            NewConnection.setCommonInterests(mutableListOf("talk"))
-//            println(p)
+            NewConnection.setCommonInterests(mutableListOf("gayming"))
             NewConnection.start()
             runBlocking {
                 NewConnection.continueOn()
             }
         }
         val scanner = Scanner(System.`in`)
+    }
+
+    @Test
+    fun `test more`() {
+        val value = "[['value'], ['property', 'value']]"
+        Gson().fromJson(value, JsonArray::class.java).forEach {
+            (it as JsonArray)
+                .asList()
+                .map { it.asString }
+                .run { println(it.toMutableList()) }
+        }
     }
 
     @Test

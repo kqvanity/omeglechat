@@ -3,18 +3,19 @@ package com.chatter.omeglechat.data.network
 import com.chatter.omeglechat.domain.model.ConnectionStates
 import com.google.gson.Gson
 import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.google.gson.JsonSyntaxException
 import com.polendina.lib.ConnectionObserver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import retrofit2.Response
 import retrofit2.awaitResponse
 import java.net.URI
 import kotlin.math.floor
-import kotlin.reflect.typeOf
 
 object NewConnection {
 
@@ -25,7 +26,9 @@ object NewConnection {
      *
      * @param clientId The remote user clientID.
      */
-    suspend fun eventsRemoteRequest(clientId: String): okhttp3.Response {
+    suspend fun eventsRemoteRequest(
+        clientId: String
+    ): okhttp3.Response {
         return okHttpStuff(
             fullUrl = BaseUrls.EVENTS.url,
             headers = okHttpHeaders,
@@ -37,19 +40,25 @@ object NewConnection {
      * Parse remote events.
      *
      */
-    suspend fun parseEventsRemoteRequest(response: okhttp3.Response) {
-        response.body?.apply {
-            try {
-                parseEvents(Gson().fromJson(this.string(), JsonArray::class.java))
-            } catch (e: IllegalStateException) {
-                e.printStackTrace()
-            } catch (exception: JsonSyntaxException) {
-                exception.printStackTrace()
-                apply {
-                    try {
-                        parseEvents(Gson().fromJson(this.string(), JsonObject::class.java))
-                    } catch (exception: IllegalStateException) {
-                        exception.printStackTrace()
+    suspend fun parseEventsRemoteRequest(
+        response: String
+    ) {
+        Gson().fromJson(response, JsonElement::class.java).run {
+            when(this) {
+                is JsonObject -> {
+                    getAsJsonArray("events")
+                        .get(0)
+                        .asJsonArray
+                        .get(0)
+                        .asString
+                        .let { parseEvents(listOf(it)) }
+                }
+                is JsonArray -> {
+                    forEach {
+                        (it as JsonArray)
+                            .asList()
+                            .map { it.asString }
+                            .let { parseEvents(it) }
                     }
                 }
             }
@@ -66,8 +75,7 @@ object NewConnection {
             headers = okHttpHeaders,
             requestBody = FormBody.Builder().add("id", clientId).build()
         ).let {
-            if (it.code != 200 && it.body?.string() != "win") {
-            }
+            if (it.code != 200 && it.body?.string() != "win") { }
         }
     }
 
@@ -99,31 +107,9 @@ object NewConnection {
     /**
      * Parse user return Object
      */
-    fun parseEvents(response: Any?): Unit {
-
-        var responseString: String = ""
-
-        when(response) {
-            // When the remote server blocks the IP, it sends an empty JSON object {}, with the text message "Error connecting to server. Please try again." at the webpage.
-            is StartResponse -> {
-                if (response.clientID == null) {
-                    responseString = ConnectionStates.CONNECTION_ERROR.state
-                } else {
-                    this@NewConnection.clientId = response.clientID
-                    responseString = response.events.first().first()
-                }
-            }
-            is JsonObject -> {
-                responseString = response.getAsJsonArray("events").get(0).asJsonArray.get(0).asString
-            }
-            is JsonArray -> {
-                if (response.size() != 0) {         // Mitigating empty responses. They take place when the conversation is on a halt for example.
-                    responseString = response.get(0).asJsonArray.get(0).asString
-                }
-            }
-        }
-
-        when (responseString) {
+    fun parseEvents(response: List<String>): Unit {
+        when (response.first()) {
+            ConnectionStates.RECAPTCHA_REQUIRED.state -> connectionObserver?.onRecaptchaRequired()
             ConnectionStates.CONNECTED.state -> {
                 var commonInterests = listOf<String>()
                 // TODO: Implement functionality for notifying the user(s) that they're speaking the same language
@@ -146,17 +132,16 @@ object NewConnection {
             }
             ConnectionStates.TYPING.state -> connectionObserver?.onTyping()
             ConnectionStates.STOPPED_TYPING.state -> connectionObserver?.onStoppedTyping()
-            ConnectionStates.RECAPTCHA_REQUIRED.state -> connectionObserver?.onRecaptchaRequired()
             ConnectionStates.MESSAGE.state -> {
-                val userMessage = (response as JsonArray).get(0).asJsonArray.get(1).asString
-                connectionObserver?.onGotMessage(userMessage)
+                connectionObserver?.onGotMessage(response.last())
             }
             ConnectionStates.DISCONNECTED.state -> connectionObserver?.onUserDisconnected()
             ConnectionStates.WAITING.state -> connectionObserver?.onWaiting()
             ConnectionStates.ERROR.state -> connectionObserver?.onError()
             ConnectionStates.CONNECTION_ERROR.state -> connectionObserver?.onConnectionError()
         }
-        connectionObserver?.onEvent(responseString)
+        // I can't rely on direct 'when expression', because of this extraneous (not-so-negligible tho) condition
+        connectionObserver?.onEvent(response.first())
     }
 
     /**
@@ -276,45 +261,36 @@ object NewConnection {
         if (ccValue.isEmpty()) setCCValue()
         initalizeConnection().run {
             if (isSuccessful) body()?.let {
-                parseEvents(it)
+                // When the remote server blocks the IP, it sends an empty JSON object {}, with the text message "Error connecting to server. Please try again." at the webpage.
+                if (it.clientID == null) {
+                    parseEvents(listOf(ConnectionStates.CONNECTION_ERROR.state))
+                } else {
+                    clientId = it.clientID
+                    parseEvents(listOf(it.events.first().first()))
+                }
             }
         }
     }
 
     suspend fun continueOn() {
-//                val eventResponses = mutableListOf<Response>()
-//                runBlocking {
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    println("Hello world")
-//                    while (true) {
-//                            .let {
-//                            eventResponses.add(it)
-//                        }
-//                    }
-//                }
-//                println("New event")
-//                CoroutineScope(Dispatchers.Default).launch {
-//                    NewConnection.apply {
-//                        parseEventsRemoteRequest(eventsRemoteRequest(clientId))
-//                    }
-//                }
-
-
-//                    NewConnection.eventsRemoteRequest(NewConnection.clientId)
-//                    NewConnection.parseEventsRemoteRequest(eventResponses.last())
-//                    eventResponses.removeLast()
-//                    }
-
-        // Kotlin flows approach. I've tried to implement flows somehow in this project, but the previous plain while() loop is the only one working (as of now)
-            flow<okhttp3.Response> {
-                while(true) {
-                    emit(eventsRemoteRequest(clientId))
-                    println("Request")
+        flow {
+            // TODO: Might implement plain async/await & while loop, instead of flows.
+            while(true) {
+                eventsRemoteRequest(clientId).run {
+                    emit(this.body?.string())
                 }
-            }.collect {
-                parseEventsRemoteRequest(it)
+                println("Request")
+            }
+        }.collect { response ->
+            CoroutineScope(Dispatchers.IO).launch {
+                println(response)
+                response?.let {
+                    println("Value is ${it}")
+                    parseEventsRemoteRequest(it)
+                }
                 println("Collect")
             }
+        }
     }
 
 }
