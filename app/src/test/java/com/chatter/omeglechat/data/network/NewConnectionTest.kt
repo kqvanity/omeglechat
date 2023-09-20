@@ -1,12 +1,9 @@
 package com.chatter.omeglechat.data.network
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.polendina.lib.ConnectionObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newCoroutineContext
 import kotlinx.coroutines.runBlocking
 
 import org.junit.Test
@@ -39,13 +36,6 @@ class NewConnectionTest {
             val messages = listOf("Hi", "How's life", "Hello")
             override fun onGotMessage(message: String) {
                 println(">> ${message}")
-//                if (!message.equals("moree")) {
-//                    coroutineIOScope.launch {
-//                        NewConnection.disconnect()
-//                        NewConnection.start()
-//                        NewConnection.continueOn()
-//                    }
-//                }
                 messages.random().let {
                     coroutineIOScope.launch {
                         println(">> ${it}")
@@ -55,9 +45,10 @@ class NewConnectionTest {
             }
             override fun onUserDisconnected() {
                 println("User disconnected")
-                coroutineIOScope.launch {
-                    NewConnection.start()
-                }
+                NewConnection.clientId = ""
+//                coroutineIOScope.launch {
+//                    NewConnection.start()
+//                }
             }
             override fun onError() {
                 println("Error")
@@ -67,29 +58,9 @@ class NewConnectionTest {
             }
         }
         runBlocking {
-            NewConnection.setCommonInterests(mutableListOf("gayming"))
+            NewConnection.setCommonInterests(mutableListOf("talk"))
             NewConnection.start()
-            runBlocking {
-                NewConnection.continueOn()
-            }
         }
-        val scanner = Scanner(System.`in`)
-    }
-
-    @Test
-    fun `test more`() {
-        val value = "[['value'], ['property', 'value']]"
-        Gson().fromJson(value, JsonArray::class.java).forEach {
-            (it as JsonArray)
-                .asList()
-                .map { it.asString }
-                .run { println(it.toMutableList()) }
-        }
-    }
-
-    @Test
-    fun `should do`() {
-        testUserInput(System.`in`)
     }
 
 }

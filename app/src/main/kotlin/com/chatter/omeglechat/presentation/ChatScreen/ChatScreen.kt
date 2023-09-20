@@ -96,7 +96,6 @@ fun ChatScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, uiMode = UI_MODE_NIGHT_NO)
 @Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
 @Composable

@@ -8,6 +8,7 @@ import com.google.gson.JsonObject
 import com.polendina.lib.ConnectionObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import okhttp3.FormBody
@@ -40,7 +41,7 @@ object NewConnection {
      * Parse remote events.
      *
      */
-    suspend fun parseEventsRemoteRequest(
+    fun parseEventsRemoteRequest(
         response: String
     ) {
         Gson().fromJson(response, JsonElement::class.java).run {
@@ -54,10 +55,12 @@ object NewConnection {
                         .let { parseEvents(listOf(it)) }
                 }
                 is JsonArray -> {
+                    println(this)
                     forEach {
                         (it as JsonArray)
                             .asList()
-                            .map { it.asString }
+                            // User disconnected events returns embedded JsonObject (containing server status info i.e., count, servers, and antinudesservers within the array, which raises this exception when parsed as String. I simply discarded this info
+                            .mapNotNull { try { it.asString  } catch(e: UnsupportedOperationException) { null } }
                             .let { parseEvents(it) }
                     }
                 }
@@ -82,6 +85,7 @@ object NewConnection {
     /**
      * Send a disconnect request to the user.
      * It's not mandatory for the client, as it can generally generate another ID, but the official implementation is so, as it signal the server hence the other user.
+     *
      */
     suspend fun disconnect() {
         okHttpStuff(
@@ -181,9 +185,7 @@ object NewConnection {
         .uppercase()
 
     /**
-     * The current ID of the remote recipient.
-     * It can be used to temporarily add or block certain users by auto-disconnecting.
-     *
+     * The current ID of the remote recipient. It can be used to temporarily add or block certain users by auto-disconnecting.
      */
     var clientId: String = String()
 
@@ -262,33 +264,30 @@ object NewConnection {
         initalizeConnection().run {
             if (isSuccessful) body()?.let {
                 // When the remote server blocks the IP, it sends an empty JSON object {}, with the text message "Error connecting to server. Please try again." at the webpage.
-                if (it.clientID == null) {
+                if (it.clientID == "null") {
                     parseEvents(listOf(ConnectionStates.CONNECTION_ERROR.state))
                 } else {
                     clientId = it.clientID
                     parseEvents(listOf(it.events.first().first()))
-                }
-            }
-        }
-    }
+                    flow {
+                        // TODO: Might implement plain async/await & while loop, instead of flows.
+                        while(clientId.isNotEmpty()) {
+                            eventsRemoteRequest(clientId).run {
+                                this.body?.let {
+                                    emit(it.string())
+                                }
+                            }
+                            println("Request")
+                        }
+                    }
+                        .collect { response ->
+                            CoroutineScope(Dispatchers.IO).launch {
+                                parseEventsRemoteRequest(response)
+                                println("Collect")
+                            }
+                        }
 
-    suspend fun continueOn() {
-        flow {
-            // TODO: Might implement plain async/await & while loop, instead of flows.
-            while(true) {
-                eventsRemoteRequest(clientId).run {
-                    emit(this.body?.string())
                 }
-                println("Request")
-            }
-        }.collect { response ->
-            CoroutineScope(Dispatchers.IO).launch {
-                println(response)
-                response?.let {
-                    println("Value is ${it}")
-                    parseEventsRemoteRequest(it)
-                }
-                println("Collect")
             }
         }
     }
