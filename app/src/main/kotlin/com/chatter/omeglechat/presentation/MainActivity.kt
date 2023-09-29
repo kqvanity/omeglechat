@@ -1,15 +1,18 @@
 package com.chatter.omeglechat
 
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,15 +22,58 @@ class MainActivity : ComponentActivity() {
 //        )
 //        val darkThemeState = chatViewModel.darkThemeState.value ?: false
         setContent {
+            val navController = rememberNavController()
+            val scope = rememberCoroutineScope()
+            val navigationDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+            val navBackStackEntry = navController.currentBackStackEntry?.destination?.route
+//                                    val currentScreenId = rememberSaveable { mutableStateOf("") }
+//                                    currentScreenId.value = it.id
             OmegleChatTheme(
                 darkTheme = false
             ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    Navigation()
-                }
+                ModalNavigationDrawer(
+                    drawerContent = {
+                        WholeDrawer(
+                            onItemCallback = {
+                                navController.navigate(it.screen.route) {
+                                    navController.graph.startDestinationRoute?.let {route ->
+                                        popUpTo(route) {
+                                            saveState = true
+                                        }
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                                scope.launch {
+                                    navigationDrawerState.close()
+                                }
+                            }
+                        )
+                    },
+                    gesturesEnabled = navigationDrawerState.isOpen,
+                    drawerState = navigationDrawerState,
+                    content = {
+                        Scaffold(
+                            topBar = {
+                                AppBar(
+                                    onNavigationiconClick =  {
+                                        scope.launch {
+                                            navigationDrawerState.open()
+                                        }
+                                    }
+                                )
+                            },
+                            content = { padding ->
+                                setupNavGraph(
+                                    navController = navController,
+                                    padding = padding
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                        )
+                    }
+                )
             }
         }
     }

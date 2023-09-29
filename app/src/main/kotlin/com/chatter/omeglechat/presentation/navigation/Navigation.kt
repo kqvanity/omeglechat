@@ -1,0 +1,46 @@
+package com.chatter.omeglechat
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.chatter.omeglechat.presentation.navigation.Screen
+import com.chatter.omeglechat.videoscreen.components.VideoScreen
+
+@Composable
+fun setupNavGraph(
+    navController: NavHostController,
+    padding: PaddingValues
+) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.onBoardingScreen.route
+    ) {
+        composable(route = Screen.onBoardingScreen.route) {
+            OnboardingScreen(
+                onContinueClicked = {
+                    navController.navigate(Screen.HomeScreen.route)
+                }
+            )
+        }
+        composable(route = Screen.HomeScreen.route) {
+            HomeScreen(padding = padding)
+        }
+        composable(route = Screen.videoScreen.route) {
+            VideoScreen(navController = navController)
+        }
+        composable(route = Screen.chatScreen.route) {
+            ChatScreen(
+                arrowBackCallback = {
+                    navController.navigate(Screen.HomeScreen.route)
+                }
+            )
+        }
+        composable(route = Screen.settingsScreen.route) {
+            SettingsScreen(
+                navController = navController,
+            )
+        }
+    }
+}
