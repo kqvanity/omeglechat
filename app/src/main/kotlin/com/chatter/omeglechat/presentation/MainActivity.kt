@@ -22,15 +22,15 @@ class MainActivity : ComponentActivity() {
 //        )
 //        val darkThemeState = chatViewModel.darkThemeState.value ?: false
         setContent {
-            val navController = rememberNavController()
-            val scope = rememberCoroutineScope()
-            val navigationDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-            val navBackStackEntry = navController.currentBackStackEntry?.destination?.route
-//                                    val currentScreenId = rememberSaveable { mutableStateOf("") }
-//                                    currentScreenId.value = it.id
             OmegleChatTheme(
                 darkTheme = false
             ) {
+                val coroutineScope = rememberCoroutineScope()
+                val navController = rememberNavController()
+                val navigationDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                val navBackStackEntry = navController.currentBackStackEntry?.destination?.route
+//                                    val currentScreenId = rememberSaveable { mutableStateOf("") }
+//                                    currentScreenId.value = it.id
                 ModalNavigationDrawer(
                     drawerContent = {
                         WholeDrawer(
@@ -44,24 +44,17 @@ class MainActivity : ComponentActivity() {
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                                scope.launch {
+                                coroutineScope.launch {
                                     navigationDrawerState.close()
                                 }
                             }
                         )
                     },
-                    gesturesEnabled = navigationDrawerState.isOpen,
+                    gesturesEnabled = true,
                     drawerState = navigationDrawerState,
                     content = {
                         Scaffold(
                             topBar = {
-                                AppBar(
-                                    onNavigationiconClick =  {
-                                        scope.launch {
-                                            navigationDrawerState.open()
-                                        }
-                                    }
-                                )
                             },
                             content = { padding ->
                                 setupNavGraph(
