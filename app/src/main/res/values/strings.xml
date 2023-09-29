@@ -19,4 +19,9 @@
     <string name="auto_translate_description">Auto translate incoming and outgoing words and phrases!</string>
     <string name="blocked_words">M, Sex</string>
     <string name="connected">Connected</string>
+    <string name="view_all">View All</string>
+    <string name="active">Active</string>
+    <string name="search">Search..</string>
+    <string name="message">Message</string>
+    <string name="chats">Chats</string>
 </resources>
