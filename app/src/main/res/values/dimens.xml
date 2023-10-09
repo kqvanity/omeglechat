@@ -1,7 +1,7 @@
 <resources>
     <dimen name="padding_miniscule">5dp</dimen>
     <dimen name="padding_small">10dp</dimen>
-    <dimen name="padding_medium">20dp</dimen>
+    <dimen name="padding_medium">10dp</dimen>
     <dimen name="padding_preferences_top">16dp</dimen>
     <dimen name="padding_preferences_end">16dp</dimen>
     <dimen name="image_size">65dp</dimen>

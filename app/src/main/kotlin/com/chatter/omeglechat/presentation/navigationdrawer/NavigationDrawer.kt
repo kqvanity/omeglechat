@@ -1,7 +1,9 @@
 package com.chatter.omeglechat
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -50,8 +52,9 @@ fun WholeDrawer(
             contentAlignment = Alignment.BottomStart,
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp))
                 .height(100.dp)
-                .background(MaterialTheme.colorScheme.primary)
+                .background(MaterialTheme.colorScheme.tertiaryContainer)
                 .padding(vertical = dimensionResource(id = R.dimen.padding_miniscule))
         ) {
             Text(
@@ -68,23 +71,22 @@ fun WholeDrawer(
             )
         }
         LazyColumn (
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
-                .padding(
-                    top = 10.dp
-                )
+                .padding(top = 10.dp)
         ) {
             items(MenuItem.entries.toList()) { item ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-//                        .padding(dimensionResource(id = R.dimen.padding_medium))
-                        .padding(horizontal = 10.dp)
-                        .height(60.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .padding(horizontal = dimensionResource(id = R.dimen.padding_medium))
+                        .clip(RoundedCornerShape(25.dp))
+                        .height(50.dp)
                         .clickable {
                             onItemCallback(item)
                         }
+                        .background(MaterialTheme.colorScheme.tertiaryContainer)
                 ) {
                     Icon(
                         imageVector = item.icon,
@@ -97,7 +99,7 @@ fun WholeDrawer(
                         text = item.title,
                         style = TextStyle(
                             fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onPrimary
                         ),
                         modifier = Modifier
                             .weight(1f)
@@ -109,13 +111,14 @@ fun WholeDrawer(
 }
 
 @Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
 @Composable
-fun previewNavigationDrawer() {
+fun PreviewNavigationDrawer() {
     OmegleChatTheme {
         Column (
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.LightGray)
+                .background(MaterialTheme.colorScheme.onBackground)
         ) {
             WholeDrawer(
                 onItemCallback = {}
