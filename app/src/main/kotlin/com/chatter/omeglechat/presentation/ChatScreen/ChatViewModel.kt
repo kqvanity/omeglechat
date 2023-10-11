@@ -2,72 +2,80 @@ package com.chatter.omeglechat.ChatScreen
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
-import com.chatter.omeglechat.data.network.NewConnection
+import androidx.lifecycle.viewModelScope
+import com.chatter.omeglechat.data.network.Connection
 import com.chatter.omeglechat.domain.model.ConnectionStates
-import com.chatter.omeglechat.preferences.PreferencesViewModel
+import com.chatter.omeglechat.preferences.PreferencesRepository
+import com.chatter.omeglechat.presentation.ChatScreen.chatMessages
+import com.chatter.omeglechat.presentation.ChatScreen.commonInterest
+import com.chatter.omeglechat.presentation.preferencesScreen.dataStore
 import com.polendina.lib.ConnectionObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class ChatViewModel(
-//) : ViewModel() {
-    application: Application = Application()
-) : AndroidViewModel(application) {
+interface ChatViewModel {
+    var messages: SnapshotStateList<Message>
+    var connectionState: String
+    var commonInterests: SnapshotStateList<String>
+    var textMessage: MutableState<String>
+    fun sendTextMessage()
+    fun terminate()
+}
 
-//    var messages = chatMessages.toMutableStateList()
-    var messages = mutableStateListOf<Message>()
-        private set
-    private var counter = MutableStateFlow(value = listOf<String>())
-    //    private var _scrollState = rememberScrollState()
-    var connectionState by mutableStateOf(String())
-        private set
-//    private val newConnection by mutableStateOf(NewConnection())
-    var commonInterests = mutableStateListOf<String>()
-        private set
+class ChatViewModelImpl(
+    application: Application = Application(),
+) : ChatViewModel, AndroidViewModel(application) {
+    private val connection by lazy { Connection() }
+    override var messages = mutableStateListOf<Message>()
+
+    override var connectionState by mutableStateOf(String())
+    override var commonInterests = mutableStateListOf<String>()
 
     // General user interests (saved in the settings DataStore, and the matching interests returned by Omegle's server)
-    private var userInterests: MutableList<String>
+    private lateinit var userInterests: List<String>
 
     private val prohibitedIds = mutableStateListOf<String>()
 
-    var textMessage = mutableStateOf("")
+    override var textMessage = mutableStateOf("")
 
-    val ioScope = CoroutineScope(Dispatchers.IO)
+    private val ioScope = CoroutineScope(Dispatchers.IO)
 
-    fun sendTextMessage() {
+    override fun sendTextMessage() {
         ioScope.launch {
-            NewConnection.sendText(textMessage.value)
+            connection.sendText(textMessage.value)
             messages.add(Message(0, textMessage.value))
             connectionState = ConnectionStates.MESSAGE.displayName
             textMessage.value = ""
         }
     }
 
-    fun terminate() {
+    override fun terminate() {
         messages.clear()
         connectionState = ConnectionStates.DISCONNECTED.displayName
         commonInterests.clear()
         ioScope.launch {
-            NewConnection.disconnect()
-            NewConnection.setCommonInterests(userInterests)
-            NewConnection.start()
+            connection.disconnect()
+            connection.commonInterests = userInterests
+            connection.start()
         }
     }
 
     private fun initializeObservers() {
-        NewConnection.connectionObserver = object : ConnectionObserver {
+        connection.connectionObserver = object : ConnectionObserver {
             override fun onConnected(usersCommonInterests: List<String>) {
                 connectionState = ConnectionStates.CONNECTED.displayName
                 commonInterests = usersCommonInterests.toMutableStateList()
-                if (prohibitedIds.contains(NewConnection.clientId)) {
+                if (prohibitedIds.contains(connection.clientId)) {
                     terminate()
                 }
             }
@@ -77,8 +85,8 @@ class ChatViewModel(
             override fun onUserDisconnected() {
                 connectionState = ConnectionStates.DISCONNECTED.displayName
                 commonInterests.clear()
-                NewConnection.setCommonInterests(userInterests.toMutableList())
-                NewConnection.clientId = ""
+                connection.commonInterests = userInterests.toMutableList()
+                connection.clientId = ""
             }
             override fun onConnectionError() { TODO("Not yet implemented") }
             override fun onWaiting() { connectionState = ConnectionStates.WAITING.displayName }
@@ -95,22 +103,40 @@ class ChatViewModel(
         super.onCleared()
         // TODO: I'm not sure if it's technically working or not!
         ioScope.launch {
-            NewConnection.disconnect()
+            connection.disconnect()
         }
     }
 
     init {
-        userInterests = PreferencesViewModel(application).userInterests
-        NewConnection.setCommonInterests(userInterests)
-        initializeObservers()
-        // Instantiating new connection when the the chat screen is loaded.
-        ioScope.launch {
-            NewConnection.start()
+        viewModelScope.launch {
+            val preferencesRepository = PreferencesRepository(application.applicationContext.dataStore)
+            userInterests = preferencesRepository.getUserInterests().first()
+            connection.commonInterests = userInterests
+            initializeObservers()
         }
     }
+
 }
 
 data class Message(
     val id: Int,
     val text: String
 )
+
+class ChatViewModelMock(): ChatViewModel {
+    override var commonInterests: SnapshotStateList<String>
+        get() = commonInterest.toMutableStateList()
+        set(value) {}
+    override var connectionState: String
+        get() = ConnectionStates.entries.random().state
+        set(value) {}
+    override var messages: SnapshotStateList<Message>
+        get() = chatMessages.toMutableStateList()
+        set(value) {}
+    override var textMessage: MutableState<String>
+        get() = mutableStateOf(chatMessages.random().text)
+        set(value) {}
+
+    override fun sendTextMessage() { }
+    override fun terminate() { }
+}

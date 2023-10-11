@@ -11,10 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chatter.omeglechat.ChatScreen.BottomBar
 import com.chatter.omeglechat.ChatScreen.ChatViewModel
 import com.chatter.omeglechat.ChatScreen.MainContent
@@ -26,16 +24,16 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
+import com.chatter.omeglechat.ChatScreen.ChatViewModelMock
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    chatViewModel: ChatViewModel = viewModel(),
+    chatViewModel: ChatViewModel,
     arrowBackCallback: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currentLocalContext = LocalContext.current
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -102,6 +100,7 @@ fun ChatScreen(
 fun PreviewChatScreen() {
     OmegleChatTheme {
         ChatScreen(
+            chatViewModel = ChatViewModelMock(),
             arrowBackCallback = {}
         )
     }

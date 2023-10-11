@@ -20,7 +20,7 @@ internal val chatMessages = mutableListOf(
     Message(0, "Just as you would say that lorem for additional saying and other things that makes it absolutely ridiculously")
 )
 
-internal val commonInterests = listOf(
+internal val commonInterest = listOf(
     "youtube",
     "politics",
     "gaming'",
