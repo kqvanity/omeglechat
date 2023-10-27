@@ -1,6 +1,6 @@
 # OmegleChat
 
-A new Android client for the [Omegle website](https://www.omegle.ecom).
+A new Android client for the [Omegle website](https://www.omegle.com).
 
 ## Features
 - [ ] Block Users
@@ -9,13 +9,12 @@ A new Android client for the [Omegle website](https://www.omegle.ecom).
 - [x] Stored preferences
 
 ## Showcase
-<span>
-    <img src="./media/onboarding.jpg" width="300" height="700"> &nbsp;
-    <img src="./media/home.jpg" width="300" height="700"> &nbsp;
-    <img src="./media/NavigationDrawer.png" width="300" height="700"> &nbsp;
-    <img src="./media/settings.jpg" width="300" height="700"> &nbsp;
-    <img src="./media/chat.jpg" width="300" height="700"> &nbsp;
-</span>
+<p>
+    <img src="./media/preview - 1.png" width="200" height="450">
+    <img src="./media/preview - 2.jpg" width="200" height="450">
+    <img src="./media/preview - 4.png" width="200" height="450">
+    <img src="./media/preview - 5.jpg" width="200" height="450">
+</p>
 
 ## Installation
 

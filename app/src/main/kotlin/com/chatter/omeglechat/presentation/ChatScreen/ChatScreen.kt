@@ -17,14 +17,13 @@ import com.chatter.omeglechat.ChatScreen.BottomBar
 import com.chatter.omeglechat.ChatScreen.ChatViewModel
 import com.chatter.omeglechat.ChatScreen.MainContent
 import com.chatter.omeglechat.ChatScreen.TopChattingBar
-import com.chatter.omeglechat.ChatScreen.scrollToBottom
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
-import com.chatter.omeglechat.ChatScreen.ChatViewModelMock
+import com.chatter.omeglechat.presentation.ChatScreen.ChatViewModelMock
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,7 +35,6 @@ fun ChatScreen(
 ) {
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         topBar = {
@@ -50,14 +48,6 @@ fun ChatScreen(
                 arrowBackCallback = arrowBackCallback
             )
         },
-        containerColor = MaterialTheme.colorScheme.background,
-        content = { paddingValue ->
-            MainContent(
-                paddingValue = paddingValue,
-                messages = chatViewModel.messages.toMutableList(),
-                scrollState = scrollState
-            )
-        },
         bottomBar = {
             Row (
                 modifier = Modifier
@@ -65,12 +55,22 @@ fun ChatScreen(
                     .background(MaterialTheme.colorScheme.background)
             ) {
                 BottomBar(
-                    textMessageState = chatViewModel.textMessage.value,
+                    textMessageState = "",
+//                    textMessageState = chatViewModel.textMessage.value,
                     onSendClick = {
                         //  I guess this button should have some other implementation for the onClick callback
                         // for example if the TextField content is empty, there the Send button is deactivated in some way
                         chatViewModel.sendTextMessage()
-                        coroutineScope.launch { scrollToBottom(scrollState = scrollState) }
+                        coroutineScope.launch {
+                            // Scroll to the bottom
+                            // todo: I guess it needs a bit of refinement. (Still not fully working)
+                            // Like what if the user explicitly scrolled up. Should i force him down with each new message, or maybe i should notify him of a new incoming message like whatsapp does?
+                            scrollState.layoutInfo.totalItemsCount.let {
+                                if (it > 0) {
+                                    scrollState.animateScrollToItem(it - 1)
+                                }
+                            }
+                        }
                     },
                     onTerminateClick = {
                         chatViewModel.terminate()
@@ -88,6 +88,16 @@ fun ChatScreen(
                         )
                 )
             }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        content = { paddingValue ->
+            MainContent(
+                paddingValue = paddingValue,
+                messages = chatViewModel.messages.toMutableList(),
+                scrollState = scrollState,
+                modifier = Modifier
+                    .padding(10.dp)
+            )
         },
         modifier = Modifier
             .nestedScroll(scrollBehavior.nestedScrollConnection)
