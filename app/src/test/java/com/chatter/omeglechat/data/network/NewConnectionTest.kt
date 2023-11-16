@@ -5,22 +5,30 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.Before
 
 import org.junit.Test
-import java.io.InputStream
-import java.util.Scanner
 
 class NewConnectionTest {
-    val coroutineIOScope = CoroutineScope(Dispatchers.IO)
+
+    private lateinit var coroutineIOScope: CoroutineScope
+    private lateinit var connection: Connection
+    private val threshold = 3
+    private var counter = 0
+
+    @Before
+    fun setup() {
+        coroutineIOScope = CoroutineScope(Dispatchers.IO)
+        connection = Connection()
+    }
 
     @Test
     fun start() {
-        NewConnection.connectionObserver = object: ConnectionObserver {
+        connection.connectionObserver = object: ConnectionObserver {
+            override fun onEvent(response: String) { }
             override fun onWaiting() {
                 println("Waiting")
             }
-
-            override fun onEvent(response: String) { }
             override fun onConnected(commonInterests: List<String>) {
                 println("Connected")
             }
@@ -39,13 +47,18 @@ class NewConnectionTest {
                 messages.random().let {
                     coroutineIOScope.launch {
                         println(">> ${it}")
-                        NewConnection.sendText(it)
+                        connection.sendText(it)
                     }
+                }
+                counter++
+                if (counter == threshold) coroutineIOScope.launch {
+                    connection.disconnect()
+                    return@launch
                 }
             }
             override fun onUserDisconnected() {
                 println("User disconnected")
-                NewConnection.clientId = ""
+                connection.clientId = ""
 //                coroutineIOScope.launch {
 //                    NewConnection.start()
 //                }
@@ -58,18 +71,9 @@ class NewConnectionTest {
             }
         }
         runBlocking {
-            NewConnection.setCommonInterests(mutableListOf("talk"))
-            NewConnection.start()
+            connection.commonInterests = listOf("talk")
+            connection.start()
         }
     }
 
 }
-fun testUserInput(input: InputStream) {
-    println("Input name")
-//        val scanner = BufferedReader(InputStreamReader(System.`in`))
-//        val value = scanner.readLine()
-    val value = input.read()
-    println(value)
-}
-
-

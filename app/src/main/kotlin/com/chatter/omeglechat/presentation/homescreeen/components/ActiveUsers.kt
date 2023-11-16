@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.chatter.omeglechat.R
-import com.chatter.omeglechat.data.network.NewConnection
+import com.chatter.omeglechat.data.network.Connection
 import kotlin.random.Random
 
 /**
@@ -31,7 +31,7 @@ import kotlin.random.Random
 class User(
     name: String,
     chatLog: SnapshotStateList<Message>,
-    connection: NewConnection // TODO: This should be renamed to plain 'Connection' and the original code refactor to reflect a class per user.
+    connection: Connection // TODO: This should be renamed to plain 'Connection' and the original code refactor to reflect a class per user.
 ) {
     val name = name
     val chatLog = chatLog
@@ -52,7 +52,7 @@ data class Message(
 
 private val messages = listOf("Hi", "Hello", "Hi", "Nice to meet you!", "Hi How's life", "Good how about you")
 private val userNames = listOf("Sam Andreas", "Karl Johansen", "Romen Reins", "Jake Wharton", "Sam Atlas", "Robert Lewndoeski", "Adms Klein", "Thomas Rivolt", "Kein Atlantis", "Roy Sam", "Adms Kein")
-val users = userNames.map { User(name = it, chatLog = messages.shuffled().map { Message(id = Random.nextInt(2), content = it, seen = Random.nextBoolean()) }.toMutableStateList(), connection = NewConnection) }
+val users = userNames.map { User(name = it, chatLog = messages.shuffled().map { Message(id = Random.nextInt(2), content = it, seen = Random.nextBoolean()) }.toMutableStateList(), connection = Connection()) }
 
 @Composable
 fun ActiveUsers(

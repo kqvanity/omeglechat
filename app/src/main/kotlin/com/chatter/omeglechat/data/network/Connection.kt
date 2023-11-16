@@ -6,11 +6,9 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.polendina.lib.ConnectionObserver
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import retrofit2.Response
@@ -18,9 +16,13 @@ import retrofit2.awaitResponse
 import java.net.URI
 import kotlin.math.floor
 
-object NewConnection {
+class Connection {
 
-    private val commonInterests: MutableList<String> = mutableListOf()
+    /**
+     * Interests that gets sent tot he server to find a users matching with all / subset of the interests.
+     * The server responds with a commonLikes response, to signal the interests (if any) that matched up with the remote recipient.
+     */
+    var commonInterests: List<String> = emptyList()
 
     /**
      * Send POST request to obtain events.
@@ -55,7 +57,6 @@ object NewConnection {
                         .let { parseEvents(listOf(it)) }
                 }
                 is JsonArray -> {
-                    println(this)
                     forEach {
                         (it as JsonArray)
                             .asList()
@@ -88,6 +89,7 @@ object NewConnection {
      *
      */
     suspend fun disconnect() {
+        clientId = ""
         okHttpStuff(
             fullUrl = BaseUrls.DISCONNECT.url,
             headers = okHttpHeaders,
@@ -162,10 +164,6 @@ object NewConnection {
                 .add( "msg", text)
                 .add( "id", clientId)
                 .build()
-//                        MultipartBody.Builder()
-//                            .addFormDataPart("msg", text)
-//                            .addFormDataPart( "id", this.clientId)
-//                            .build()
         ).let {
             if (it.code != 200 && it.body?.string() != "win") {
 //                throw Exception(
@@ -185,17 +183,15 @@ object NewConnection {
         .uppercase()
 
     /**
-     * The current ID of the remote recipient. It can be used to temporarily add or block certain users by auto-disconnecting.
+     * ID of the remote user. It can be used to temporarily add or block certain users by auto-disconnecting.
+     * When disconnecting from user, it should be reset to a default empty string.
      */
     var clientId: String = String()
 
-    private var ccValue: String = ""
     /**
-     * Obtain the CC value. The generic value gets generated at the very first request.
+     * A generic value gets generated at the very first request.
      */
-    fun getCCValue(): String {
-        return (ccValue)
-    }
+    private var ccValue: String = ""
     suspend fun setCCValue(): Unit {
         okHttpStuff(
             fullUrl = BaseUrls.CHECK.url,
@@ -243,26 +239,13 @@ object NewConnection {
     }
 
     /**
-     * Set the common interests topics for the user.
-     * These interests gets sent tot he server to find a matching ones, or a subset of the matches.
-     * The server responds with a commonLikes response, to signal the interests (if any) that matched up with the remote recipient.
-     *
-     * @param commonInterests The list of common interests
-     */
-    fun setCommonInterests(commonInterests: MutableList<String>) {
-        NewConnection.commonInterests.clear()
-        NewConnection.commonInterests.addAll(commonInterests)
-    }
-
-    private val eventResponses: MutableList<okhttp3.Response> = mutableListOf()
-
-    /**
      * Ignite a new connection, by setting the random ID and CC value, then initialize a connection with a random recipient.
      */
     suspend fun start() {
-        if (ccValue.isEmpty()) setCCValue()
+        if (ccValue.isBlank()) setCCValue()
         initalizeConnection().run {
-            if (isSuccessful) body()?.let {
+            if (!isSuccessful) return
+            body()?.let {
                 // When the remote server blocks the IP, it sends an empty JSON object {}, with the text message "Error connecting to server. Please try again." at the webpage.
                 if (it.clientID == "null") {
                     parseEvents(listOf(ConnectionStates.CONNECTION_ERROR.state))
@@ -280,13 +263,12 @@ object NewConnection {
                             println("Request")
                         }
                     }
-                        .collect { response ->
-                            CoroutineScope(Dispatchers.IO).launch {
-                                parseEventsRemoteRequest(response)
-                                println("Collect")
-                            }
+                    .collect { response ->
+                        withContext(Dispatchers.IO) {
+                            parseEventsRemoteRequest(response)
+                            println("Collect")
                         }
-
+                    }
                 }
             }
         }
