@@ -2,9 +2,11 @@ package com.chatter.omeglechat
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.chatter.omeglechat.presentation.ChatScreen.ChatViewModelImpl
 import com.chatter.omeglechat.presentation.navigation.Screen
 import com.chatter.omeglechat.videoscreen.components.VideoScreen
 
@@ -32,6 +34,7 @@ fun setupNavGraph(
         }
         composable(route = Screen.chatScreen.route) {
             ChatScreen(
+                chatViewModel = viewModel<ChatViewModelImpl>(),
                 arrowBackCallback = {
                     navController.navigate(Screen.HomeScreen.route)
                 }

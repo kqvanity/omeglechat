@@ -28,17 +28,12 @@ class ChatViewModelImpl(
 ) : ChatViewModel, AndroidViewModel(application) {
     private val connection by lazy { Connection() }
     override var messages = mutableStateListOf<Message>()
-
     override var connectionState by mutableStateOf(String())
     override var commonInterests = mutableStateListOf<String>()
-
     // General user interests (saved in the settings DataStore, and the matching interests returned by Omegle's server)
     private lateinit var userInterests: List<String>
-
     private val prohibitedIds = mutableStateListOf<String>()
-
     override var textMessage = mutableStateOf("")
-
     private val ioScope = CoroutineScope(Dispatchers.IO)
 
     override fun sendTextMessage() {

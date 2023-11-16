@@ -18,7 +18,6 @@ import com.chatter.omeglechat.ChatScreen.ChatViewModel
 import com.chatter.omeglechat.ChatScreen.MainContent
 import com.chatter.omeglechat.ChatScreen.TopChattingBar
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
-
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
