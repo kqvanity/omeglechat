@@ -1,4 +1,4 @@
-package com.chatter.omeglechat
+package com.chatter.omeglechat.presentation.navigationdrawer
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
@@ -29,7 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.chatter.omeglechat.presentation.navigationdrawer.MenuItem
+import com.chatter.omeglechat.R
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 
 @Composable

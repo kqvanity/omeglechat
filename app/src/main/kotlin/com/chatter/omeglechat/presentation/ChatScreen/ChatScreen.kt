@@ -1,4 +1,4 @@
-package com.chatter.omeglechat
+package com.chatter.omeglechat.presentation.ChatScreen
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,16 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.chatter.omeglechat.ChatScreen.BottomBar
+import com.chatter.omeglechat.presentation.ChatScreen.components.BottomBar
 import com.chatter.omeglechat.ChatScreen.ChatViewModel
-import com.chatter.omeglechat.ChatScreen.MainContent
-import com.chatter.omeglechat.ChatScreen.TopChattingBar
+import com.chatter.omeglechat.presentation.ChatScreen.components.MainContent
+import com.chatter.omeglechat.presentation.ChatScreen.components.TopChattingBar
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
-import com.chatter.omeglechat.presentation.ChatScreen.ChatViewModelMock
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

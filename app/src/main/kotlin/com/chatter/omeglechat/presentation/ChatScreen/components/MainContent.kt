@@ -1,4 +1,4 @@
-package com.chatter.omeglechat.ChatScreen
+package com.chatter.omeglechat.presentation.ChatScreen.components
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -46,10 +46,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.chatter.omeglechat.utils.dateTwelveFormat
 import com.chatter.omeglechat.R
 import com.chatter.omeglechat.domain.model.Message
 import com.chatter.omeglechat.presentation.ChatScreen.ChatViewModelMock
-import com.chatter.omeglechat.presentation.ChatScreen.components.MessageAlertDialog
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
 

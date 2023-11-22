@@ -1,4 +1,4 @@
-package com.chatter.omeglechat.ChatScreen
+package com.chatter.omeglechat.presentation.ChatScreen.components
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES

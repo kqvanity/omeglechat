@@ -1,4 +1,4 @@
-package com.chatter.omeglechat.ChatScreen
+package com.chatter.omeglechat.utils
 
 import java.util.Date
 

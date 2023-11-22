@@ -1,4 +1,4 @@
-package com.chatter.omeglechat
+package com.chatter.omeglechat.presentation.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -6,8 +6,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.chatter.omeglechat.presentation.ChatScreen.ChatScreen
+import com.chatter.omeglechat.HomeScreen
+import com.chatter.omeglechat.OnboardingScreen
+import com.chatter.omeglechat.SettingsScreen
 import com.chatter.omeglechat.presentation.ChatScreen.ChatViewModelImpl
-import com.chatter.omeglechat.presentation.navigation.Screen
 import com.chatter.omeglechat.videoscreen.components.VideoScreen
 
 @Composable

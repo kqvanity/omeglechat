@@ -1,4 +1,4 @@
-package com.chatter.omeglechat
+package com.chatter.omeglechat.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,6 +11,8 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.chatter.omeglechat.presentation.navigationdrawer.WholeDrawer
+import com.chatter.omeglechat.presentation.navigation.setupNavGraph
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import kotlinx.coroutines.launch
 
@@ -29,8 +31,8 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val navigationDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val navBackStackEntry = navController.currentBackStackEntry?.destination?.route
-//                                    val currentScreenId = rememberSaveable { mutableStateOf("") }
-//                                    currentScreenId.value = it.id
+//                val currentScreenId = rememberSaveable { mutableStateOf("") }
+//                currentScreenId.value = it.id
                 ModalNavigationDrawer(
                     drawerContent = {
                         WholeDrawer(
@@ -54,8 +56,7 @@ class MainActivity : ComponentActivity() {
                     drawerState = navigationDrawerState,
                     content = {
                         Scaffold(
-                            topBar = {
-                            },
+                            topBar = { },
                             content = { padding ->
                                 setupNavGraph(
                                     navController = navController,
