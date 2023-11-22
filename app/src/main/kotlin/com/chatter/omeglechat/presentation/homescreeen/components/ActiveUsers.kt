@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.chatter.omeglechat.R
 import com.chatter.omeglechat.data.network.Connection
 import com.chatter.omeglechat.data.network.ConnectionImpl
+import com.polendina.lib.ConnectionObserver
 import kotlin.random.Random
 
 /**
@@ -53,7 +54,16 @@ data class Message(
 
 private val messages = listOf("Hi", "Hello", "Hi", "Nice to meet you!", "Hi How's life", "Good how about you")
 private val userNames = listOf("Sam Andreas", "Karl Johansen", "Romen Reins", "Jake Wharton", "Sam Atlas", "Robert Lewndoeski", "Adms Klein", "Thomas Rivolt", "Kein Atlantis", "Roy Sam", "Adms Kein")
-val users = userNames.map { User(name = it, chatLog = messages.shuffled().map { Message(id = Random.nextInt(2), content = it, seen = Random.nextBoolean()) }.toMutableStateList(), connection = ConnectionImpl()) }
+val users = userNames.map { User(name = it, chatLog = messages.shuffled().map { Message(id = Random.nextInt(2), content = it, seen = Random.nextBoolean()) }.toMutableStateList(), connection = connectionMock()) }
+class connectionMock: ConnectionImpl() {
+    override suspend fun sendText(message: String) { super.sendText(message) }
+    override suspend fun start() { super.start() }
+    override val commonInterests: MutableList<String> = mutableListOf()
+    override var connectionObserver: ConnectionObserver
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var clientId: String = ""
+}
 
 @Composable
 fun ActiveUsers(

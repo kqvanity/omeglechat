@@ -123,6 +123,12 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.1.0-alpha04")
 
+    // ktor's Websockets
+    val ktor_version: String by project
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
+    implementation("io.ktor:ktor-client-websockets:$ktor_version")
+
 }
 
 tasks.withType<Test>().configureEach {

@@ -1,6 +1,13 @@
 package com.chatter.omeglechat.data.network
 
 import com.polendina.lib.ConnectionObserver
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.http.HttpMethod
+import io.ktor.websocket.DefaultWebSocketSession
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -60,34 +67,32 @@ val retrofitInstance = Retrofit.Builder()
     .create(RetrofitResponse::class.java)
 
 interface Connection {
-    fun sendText(message: String)
-    fun start()
+    suspend fun sendText(message: String)
+    suspend fun start()
     val commonInterests: MutableList<String>
     fun disconnect(): Unit
     var connectionObserver: ConnectionObserver
     var clientId: String
 }
 
-class ConnectionImpl: Connection {
-    override fun sendText(message: String) {
-        TODO("Not yet implemented")
+abstract class ConnectionImpl: Connection {
+    private val client = HttpClient {
+        install(WebSockets)
     }
-
-    override fun start() {
-        TODO("Not yet implemented")
+    override suspend fun sendText(message: String) {
+        currentSession.send(Frame.Text(message))
     }
-
-    override val commonInterests: MutableList<String>
-        get() = TODO("Not yet implemented")
-
-    override fun disconnect() {
-        TODO("Not yet implemented")
+    private lateinit var currentSession: DefaultWebSocketSession
+    override suspend fun start() {
+        client.webSocket(method = HttpMethod.Get, host = "192.168.1.4", port = 8080, path = "/chat") {
+            currentSession = this
+            while(true) {
+                connectionObserver.onGotMessage((incoming.receive() as Frame.Text).readText())
+            }
+        }
     }
-
-    override var connectionObserver: ConnectionObserver
-        get() = TODO("Not yet implemented")
-        set(value) = TODO("Not yet implemented")
-    override var clientId: String
-        get() = TODO("Not yet implemented")
-        set(value) = TODO("Not yet implemented")
+    abstract override val commonInterests: MutableList<String>
+    override fun disconnect() { client.close() }
+    abstract override var connectionObserver: ConnectionObserver
+    abstract override var clientId: String
 }
