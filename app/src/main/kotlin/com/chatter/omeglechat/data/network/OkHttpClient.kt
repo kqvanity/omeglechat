@@ -1,12 +1,8 @@
 package com.chatter.omeglechat.data.network
 
-import com.google.gson.JsonArray
+import com.polendina.lib.ConnectionObserver
 import okhttp3.ConnectionPool
-import okhttp3.FormBody
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -42,50 +38,56 @@ val verboseOkHttpClient = OkHttpClient()
     )
     .build()
 
+// TODO: This should be used for other services at the website, like the number of available users and whatnot!
 enum class BaseUrls(val url: String) {
-    BASE("http://www.omegle.com"),
-    EVENTS("https://front36.omegle.com/events"),
-    SUB_DOMAIN("https://front36.omegle.com/"),
-    DISCONNECT("https://front46.omegle.com/disconnect"),
-    SEND("https://front22.omegle.com/send"),
-    CHECK("https://waw4.omegle.com/check"),
-    COMMON_LIKES("https://front46.omegle.com/stoplookingforcommonlikes")
+    BASE("http://www.chatall.com"),
 }
 
 internal val emptyOkHttpHeaders: okhttp3.Headers = okhttp3.Headers.headersOf()
+// TODO: I should read the current device's user agent
 internal val okHttpHeaders: okhttp3.Headers = okhttp3.Headers.headersOf(
-    "Referer", BaseUrls.BASE.url,
     "User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/109.0",
-    "Cache-Control", "no-cache",
     "Origin", BaseUrls.BASE.url,
     "Accept", " application/json",
     "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8"
 )
 
 val retrofitInstance = Retrofit.Builder()
-    .baseUrl(BaseUrls.SUB_DOMAIN.url)
+    .baseUrl(BaseUrls.BASE.url)
     .addConverterFactory(GsonConverterFactory.create())
     .client(verboseOkHttpClient)
     .build()
     .create(RetrofitResponse::class.java)
 
-internal val DEFAULT_REQUEST_BODY: RequestBody = FormBody.Builder().build()
+interface Connection {
+    fun sendText(message: String)
+    fun start()
+    val commonInterests: MutableList<String>
+    fun disconnect(): Unit
+    var connectionObserver: ConnectionObserver
+    var clientId: String
+}
 
-suspend fun okHttpStuff(
-    fullUrl: String,
-    headers: okhttp3.Headers,
-    requestBody: RequestBody? = null,
-): Response {
-
-    val requestBuilder: Request.Builder = Request.Builder()
-        .url(fullUrl)
-        .headers(headers)
-
-    requestBody?.let {  // The requestBody parameter is made optional and set initially to null, so that I can have one function, without separate overloaded methods.
-        requestBuilder.post(requestBody)
-    } ?: run {
-        requestBuilder.get()
+class ConnectionImpl: Connection {
+    override fun sendText(message: String) {
+        TODO("Not yet implemented")
     }
 
-   return okHttpClient.newCall(request = requestBuilder.build()).execute()
+    override fun start() {
+        TODO("Not yet implemented")
+    }
+
+    override val commonInterests: MutableList<String>
+        get() = TODO("Not yet implemented")
+
+    override fun disconnect() {
+        TODO("Not yet implemented")
+    }
+
+    override var connectionObserver: ConnectionObserver
+        get() = TODO("Not yet implemented")
+        set(value) = TODO("Not yet implemented")
+    override var clientId: String
+        get() = TODO("Not yet implemented")
+        set(value) = TODO("Not yet implemented")
 }

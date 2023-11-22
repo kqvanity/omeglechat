@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.chatter.omeglechat.R
 import com.chatter.omeglechat.data.network.Connection
+import com.chatter.omeglechat.data.network.ConnectionImpl
 import kotlin.random.Random
 
 /**
@@ -52,7 +53,7 @@ data class Message(
 
 private val messages = listOf("Hi", "Hello", "Hi", "Nice to meet you!", "Hi How's life", "Good how about you")
 private val userNames = listOf("Sam Andreas", "Karl Johansen", "Romen Reins", "Jake Wharton", "Sam Atlas", "Robert Lewndoeski", "Adms Klein", "Thomas Rivolt", "Kein Atlantis", "Roy Sam", "Adms Kein")
-val users = userNames.map { User(name = it, chatLog = messages.shuffled().map { Message(id = Random.nextInt(2), content = it, seen = Random.nextBoolean()) }.toMutableStateList(), connection = Connection()) }
+val users = userNames.map { User(name = it, chatLog = messages.shuffled().map { Message(id = Random.nextInt(2), content = it, seen = Random.nextBoolean()) }.toMutableStateList(), connection = ConnectionImpl()) }
 
 @Composable
 fun ActiveUsers(

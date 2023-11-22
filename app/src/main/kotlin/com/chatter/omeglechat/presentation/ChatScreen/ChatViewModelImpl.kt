@@ -10,7 +10,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.chatter.omeglechat.ChatScreen.ChatViewModel
-import com.chatter.omeglechat.data.network.Connection
+import com.chatter.omeglechat.data.network.ConnectionImpl
 import com.chatter.omeglechat.domain.model.ConnectionStates
 import com.chatter.omeglechat.domain.model.Message
 import com.chatter.omeglechat.preferences.PreferencesRepository
@@ -26,7 +26,7 @@ import java.util.Date
 class ChatViewModelImpl(
     application: Application = Application(),
 ) : ChatViewModel, AndroidViewModel(application) {
-    private val connection by lazy { Connection() }
+    private val connection by lazy { ConnectionImpl() }
     override var messages = mutableStateListOf<Message>()
     override var connectionState by mutableStateOf(String())
     override var commonInterests = mutableStateListOf<String>()
@@ -51,7 +51,8 @@ class ChatViewModelImpl(
         commonInterests.clear()
         ioScope.launch {
             connection.disconnect()
-            connection.commonInterests = userInterests
+            connection.commonInterests.clear()
+            connection.commonInterests.addAll(userInterests)
             connection.start()
         }
     }
@@ -71,7 +72,7 @@ class ChatViewModelImpl(
             override fun onUserDisconnected() {
                 connectionState = ConnectionStates.DISCONNECTED.displayName
                 commonInterests.clear()
-                connection.commonInterests = userInterests.toMutableList()
+                connection.commonInterests.addAll(userInterests)
                 connection.clientId = ""
             }
             override fun onConnectionError() { TODO("Not yet implemented") }
@@ -97,7 +98,8 @@ class ChatViewModelImpl(
         viewModelScope.launch {
             val preferencesRepository = PreferencesRepository(application.applicationContext.dataStore)
             userInterests = preferencesRepository.getUserInterests().first()
-            connection.commonInterests = userInterests
+            connection.commonInterests.clear()
+            connection.commonInterests.addAll(userInterests)
             initializeObservers()
         }
     }

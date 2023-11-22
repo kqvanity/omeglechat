@@ -19,7 +19,7 @@ class NewConnectionTest {
     @Before
     fun setup() {
         coroutineIOScope = CoroutineScope(Dispatchers.IO)
-        connection = Connection()
+        connection = ConnectionImpl()
     }
 
     @Test
@@ -71,7 +71,7 @@ class NewConnectionTest {
             }
         }
         runBlocking {
-            connection.commonInterests = listOf("talk")
+            connection.commonInterests.addAll(listOf("talk"))
             connection.start()
         }
     }
