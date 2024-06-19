@@ -3,10 +3,7 @@ package com.chatter.omeglechat.presentation.preferencesScreen
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.chatter.omeglechat.domain.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 class PreferencesViewModel(
     application: Application
@@ -17,7 +14,6 @@ class PreferencesViewModel(
         scope = viewModelScope
     )
 
-    val settings: Flow<UserPreferences> = prefDataKeyValueStore.userPreferences
     var userInterests = prefDataKeyValueStore.getPrefsStateFlow(
         key = PreferencesRepository.USER_INTERESTS,
         initialValue = "",
@@ -29,12 +25,4 @@ class PreferencesViewModel(
         debounceLen = 100
     )
 
-    init {
-        viewModelScope.launch {
-            with(settings.first()) {
-                this@PreferencesViewModel.userInterests.value = userInterests
-                this@PreferencesViewModel.prohibitedWords.value = prohibitedWords
-            }
-        }
-    }
 }

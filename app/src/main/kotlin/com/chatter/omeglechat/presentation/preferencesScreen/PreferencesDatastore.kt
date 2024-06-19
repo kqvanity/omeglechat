@@ -5,25 +5,17 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.chatter.omeglechat.domain.model.UserPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import okio.IOException
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     name = "settings",
@@ -49,30 +41,6 @@ class PreferencesRepository(
         val USER_INTERESTS = stringPreferencesKey(name = "user_interests")
         val PROHIBITED_WORDS = stringPreferencesKey(name = "prohibited_words")
     }
-
-    val userPreferences: Flow<UserPreferences> = context.dataStore.data
-        .catch {
-            // Throws an IO exception when an error is encountered when reading data
-            if (it is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw (it)
-            }
-        }
-        .map { prefs ->
-            UserPreferences(
-                enableNotifications = prefs[ENABLE_NOTIFICATIONS] ?: false,
-                darkMode = prefs[ENABLE_DARK_MODE] ?: false,
-                languageMatch = prefs[ENABLE_LANGUAGE_MATCH] ?: false,
-                language = prefs[USER_LANGUAGE] ?: LANGUAGES.ENGLISH.code,
-                userInterests = prefs[USER_INTERESTS] ?: "",
-                autoReply = prefs[AUTO_REPLY] ?: false,
-                autoSkip = prefs[AUTO_SKIP] ?: false,
-                age = prefs[USER_AGE] ?: 18,
-                prohibitedWords = prefs[PROHIBITED_WORDS] ?: ""
-            )
-        }
-        .distinctUntilChanged()
 
     fun <T> getPrefs(
         key: Preferences.Key<T>,
