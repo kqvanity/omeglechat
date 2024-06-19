@@ -28,7 +28,6 @@ class DatastoreTest {
 
     private lateinit var preferencesScope: CoroutineScope
     private lateinit var dataStore: DataStore<Preferences>
-//    private lateinit var testFile: File
     private lateinit var stringKey: Preferences.Key<String>
 
     // TODO: I'm not sure If I should leave this one out here!
@@ -45,17 +44,14 @@ class DatastoreTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
 
         preferencesScope = CoroutineScope(UnconfinedTestDispatcher())
-//        dataStore = PreferenceDataStoreFactory.create(scope = preferencesScope) {
-////            testFile
-//        }
 
         dataStore = PreferenceDataStoreFactory.create(scope = preferencesScope) {
             InstrumentationRegistry.getInstrumentation().targetContext.preferencesDataStoreFile(
-                "just-testing"
+                "settings_test"
             )
         }
 
-        preferencesRepository = PreferencesRepository(context)
+        preferencesRepository = PreferencesRepository(context, preferencesScope)
     }
 
     @After
@@ -96,12 +92,17 @@ class DatastoreTest {
     fun getDataTest() = runTest {
         assertEquals(
             LANGUAGES.ENGLISH,
-            preferencesRepository.getUserData(PreferencesRepository.USER_LANGUAGE, "").first()
+            preferencesRepository.getPrefs(PreferencesRepository.USER_LANGUAGE, "").first()
         )
     }
 
     @Test
-    fun getDataStore() {
+    fun getStateFlowTest() = runTest {
+        preferencesRepository.getPrefsStateFlow(
+            key = PreferencesRepository.USER_INTERESTS,
+            initialValue = "",
+            debounceLen = 100
+        )
     }
 
 }

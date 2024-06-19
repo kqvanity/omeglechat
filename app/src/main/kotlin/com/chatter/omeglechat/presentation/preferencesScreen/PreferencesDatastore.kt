@@ -8,26 +8,36 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.chatter.omeglechat.domain.model.UserPreferences
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import okio.IOException
 
-class PreferencesRepository(
-    private val context: Context
-) {
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
-        name = "user_preferences",
-        produceMigrations = {
-            emptyList()
-        },
-        corruptionHandler = null,
-//        scope = CoroutineScope(Dispatchers.IO)
-    )
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "settings",
+    produceMigrations = {
+        emptyList()
+    },
+    corruptionHandler = null
+)
 
-    // Create some keys
+class PreferencesRepository(
+    private val context: Context,
+    private val scope: CoroutineScope
+) {
+
     companion object {
         val ENABLE_NOTIFICATIONS = booleanPreferencesKey(name = "enable_notifications")
         val ENABLE_DARK_MODE = booleanPreferencesKey(name = "enable_dark_mode")
@@ -37,9 +47,10 @@ class PreferencesRepository(
         val USER_AGE = intPreferencesKey(name = "user_age")
         val USER_LANGUAGE = stringPreferencesKey(name = "user_language")
         val USER_INTERESTS = stringPreferencesKey(name = "user_interests")
+        val PROHIBITED_WORDS = stringPreferencesKey(name = "prohibited_words")
     }
 
-    private val userPreferences: Flow<UserPreferences> = context.dataStore.data
+    val userPreferences: Flow<UserPreferences> = context.dataStore.data
         .catch {
             // Throws an IO exception when an error is encountered when reading data
             if (it is IOException) {
@@ -57,26 +68,48 @@ class PreferencesRepository(
                 userInterests = prefs[USER_INTERESTS] ?: "",
                 autoReply = prefs[AUTO_REPLY] ?: false,
                 autoSkip = prefs[AUTO_SKIP] ?: false,
-                age = prefs[USER_AGE] ?: 18
+                age = prefs[USER_AGE] ?: 18,
+                prohibitedWords = prefs[PROHIBITED_WORDS] ?: ""
             )
         }
+        .distinctUntilChanged()
 
-    fun <T> getUserData(
+    fun <T> getPrefs(
         key: Preferences.Key<T>,
         defaultValue: T
     ): Flow<T> = context.dataStore.data.map { prefs ->
         prefs[key] ?: defaultValue
     }
 
-    suspend fun <T> rememberPreference(
+    private suspend fun <T> rememberPrefs(
         key: Preferences.Key<T>,
-        defaultValue: T
+        value: T
     ) = context.dataStore.edit { prefs ->
-        prefs[key] = defaultValue
+        prefs[key] = value
+    }
+
+    fun <T> getPrefsStateFlow(
+        key: Preferences.Key<T>,
+        initialValue: T,
+        debounceLen: Long = 0
+    ): MutableStateFlow<T> {
+        val state = MutableStateFlow(initialValue)
+        scope.launch {
+            state.value = getPrefs(key = key, defaultValue = initialValue).first()
+            state.debounce(debounceLen)
+                .collectLatest { rememberPrefs(key = key, value = it) }
+        }
+        return state
     }
 
     suspend fun togglePref(key: Preferences.Key<Boolean>) = context.dataStore.edit { prefs ->
         prefs[key] = !(prefs[key] ?: false)
+    }
+
+    suspend fun <T> removePref(
+        key: Preferences.Key<T>
+    ) = context.dataStore.edit { prefs ->
+        prefs.remove(key)
     }
 
 }

@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
 import com.alorma.compose.settings.ui.SettingsCheckbox
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
@@ -53,7 +56,7 @@ import com.chatter.omeglechat.ui.theme.Typography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    navController: NavController?,
+    navController: NavController,
     preferencesViewModel: PreferencesViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -249,7 +252,7 @@ fun SettingsScreen(
                         )
 //                        val userInterests = prefDataKeyValueStore.getUserInterests().collectAsState(initial = emptyList())
                         OutlinedTextField(
-                            value = preferencesViewModel.userInterests.joinToString(", "),
+                            value = preferencesViewModel.userInterests.collectAsState().value,
                             placeholder = {
                                 Text(
                                     text = stringResource(id = R.string.user_interests),
@@ -259,12 +262,12 @@ fun SettingsScreen(
                             },
                             singleLine = true,
                             onValueChange = { newValue ->
-                                preferencesViewModel.userInterests = newValue.split(", ").toMutableStateList()
+                                preferencesViewModel.userInterests.value = newValue
                             },
                             trailingIcon = {
                                 IconButton(
                                     onClick = {
-                                        preferencesViewModel.userInterests = emptyList<String>().toMutableStateList()
+                                        preferencesViewModel.userInterests.value = ""
                                     }
                                 ) {
                                     Icon(
@@ -334,12 +337,11 @@ fun SettingsScreen(
                                     end = dimensionResource(id = R.dimen.padding_preferences_end)
                                 )
                         )
-                        var blockedWords by remember { mutableStateOf("") }
                         OutlinedTextField(
-                            enabled = false,
-                            value = blockedWords,
+                            enabled = true,
+                            value = preferencesViewModel.prohibitedWords.collectAsState(initial = "").value,
                             onValueChange = {
-                                blockedWords = it
+                                preferencesViewModel.prohibitedWords.value = it
                             },
                             placeholder = {
                                 Text(
@@ -386,6 +388,6 @@ fun SettingsScreen(
 @Composable
 fun PreviewSettings() {
     SettingsScreen(
-        navController = null
+        navController = rememberNavController()
     )
 }
