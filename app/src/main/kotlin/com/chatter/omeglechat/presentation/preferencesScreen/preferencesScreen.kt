@@ -46,7 +46,7 @@ import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
-import com.chatter.omeglechat.preferences.PreferencesViewModel
+import com.chatter.omeglechat.presentation.preferencesScreen.PreferencesViewModel
 import com.chatter.omeglechat.ui.theme.OmegleChatTheme
 import com.chatter.omeglechat.ui.theme.Typography
 

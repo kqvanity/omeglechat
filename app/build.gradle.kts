@@ -86,7 +86,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.5.0")
 
     // Preferences DataStore
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
@@ -121,7 +121,8 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
     testImplementation("com.google.truth:truth:1.1.3")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.1.0-alpha04")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.8")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.8")
 
     // ktor's Websockets
     val ktor_version: String by project

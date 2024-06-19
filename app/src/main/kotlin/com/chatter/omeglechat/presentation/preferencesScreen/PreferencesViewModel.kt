@@ -1,17 +1,15 @@
-package com.chatter.omeglechat.preferences
+package com.chatter.omeglechat.presentation.preferencesScreen
 
 import android.app.Application
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.chatter.omeglechat.presentation.preferencesScreen.dataStore
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class PreferencesViewModel(application: Application): AndroidViewModel(application) {
 
-    private val prefDataKeyValueStore = PreferencesRepository(dataStore = application.applicationContext.dataStore)
+    private val prefDataKeyValueStore = PreferencesRepository(context = application.applicationContext)
 
     private var _userInterests = mutableStateListOf<String>()
     var userInterests = _userInterests
@@ -19,15 +17,21 @@ class PreferencesViewModel(application: Application): AndroidViewModel(applicati
             field.clear()
             field.addAll(value)
             viewModelScope.launch {
-                prefDataKeyValueStore.updateUserInterests(
-                    userInterests = value.joinToString(separator = ",")
+                prefDataKeyValueStore.rememberPreference(
+                    key = PreferencesRepository.USER_INTERESTS,
+                    defaultValue = value.joinToString(separator = ",")
                 )
             }
         }
 
     init {
          viewModelScope.launch {
-             _userInterests.addAll(prefDataKeyValueStore.getUserInterests().stateIn(viewModelScope).value.toMutableStateList())
+             _userInterests.addAll(
+                 prefDataKeyValueStore
+                     .getUserData(key = PreferencesRepository.USER_INTERESTS)
+                     .stateIn(viewModelScope)
+                     .value?.split(",") ?: emptyList()
+             )
         }
     }
 
